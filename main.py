@@ -169,7 +169,7 @@ async def get_df(csv):
 
 async def get_ss():
     SHEET_NAME = "COPYYYYYYY of Count of URL Status 2024"
-    TOKEN = ""
+    TOKEN = "FF8W4twmkyxslTkWRqLabgnI0odHKPhUk5V7S"
     ssheet = ss.SSheet(TOKEN)
     ssheet.get_sheet(SHEET_NAME)
     ssheet.get_parents_first_column()

@@ -1,0 +1,34 @@
+Screen {
+    align: center middle;
+    padding: 5;
+}
+Label {
+    margin: 1 1;
+    color: white;
+    text-style: bold;
+}
+Input.-valid {
+    border: $success 60%;
+    background: white 60%;
+}
+Input.-valid:focus {
+    border: black $success;
+    background: white;
+}
+Input {
+    margin: 1 1;
+    width: auto;
+    color: black;
+    background: firebrick 50%;
+}
+Vertical {
+    width: 50;
+}
+
+Waiting {
+    align: center middle;
+    width: 50;
+}
+.markdown {
+    width: 50;
+}
