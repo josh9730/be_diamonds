@@ -153,7 +153,7 @@ class MainApp(App):
 
     async def get_ss(self) -> None:
         """Initialize smartsheet."""
-        self.ssheet = ss.SSheet(TOKEN)
+        self.ssheet = ss.SSheet()
         self.ssheet.get_sheet(self.ss_name)
 
     def load_new_vendors(self) -> list:
