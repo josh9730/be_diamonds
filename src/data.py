@@ -4,7 +4,7 @@ import pandas as pd
 import validators
 
 
-def bool_fields_test(test_val: bool, reverse: bool):
+def bool_fields_test(test_val: bool, reverse: bool) -> True | "pd.NaN":
     """Convert values to bool or pd.NA. Intent is to put valids in one Series and invalids in another,
     which will be used by pandas count() aggregator.
 
@@ -19,12 +19,12 @@ def bool_fields_test(test_val: bool, reverse: bool):
     return pd.NA
 
 
-def check_video_field(val: str, reverse: bool):
+def check_video_field(val: str, reverse: bool) -> True | "pd.NaN":
     test = val == "Y"
     return bool_fields_test(test, reverse)
 
 
-def check_url_field(url: str, reverse: bool):
+def check_url_field(url: str, reverse: bool) -> True | "pd.NaN":
     """
     Invalid URL:
         - any of test_strings in URL

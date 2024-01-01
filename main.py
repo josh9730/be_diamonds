@@ -35,7 +35,7 @@ class Browser(ModalScreen):
     def compose(self) -> ComposeResult:
         yield DirectoryTree(utils.INPUTS_DIR)
 
-    def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected):
+    def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected) -> None:
         self.dismiss(event.path)
 
 
@@ -107,7 +107,7 @@ class MainApp(App):
             update_label(event.control, "Valid")
 
     @on(Button.Pressed, "#submit")
-    def submit(self):
+    def submit(self) -> None:
         file = self.query_one("#file")
         date = self.query_one("#date")
         if all((file.value, date.value)) and all((file.is_valid, date.is_valid)):
@@ -132,7 +132,7 @@ class MainApp(App):
                 self.app.exit()
 
     @work
-    async def main(self):
+    async def main(self) -> None:
         await self.push_screen(Waiting())
 
         await asyncio.gather(self.get_df(), self.get_ss())
@@ -147,16 +147,16 @@ class MainApp(App):
         utils.update_csv_isoformat(self.csv)
         utils.save_constants({"sheet": self.ss_name})
 
-    async def get_df(self):
+    async def get_df(self) -> None:
         """Initialize dataframe."""
         self.df = data.create_output_df(self.csv)
 
-    async def get_ss(self):
+    async def get_ss(self) -> None:
         """Initialize smartsheet."""
         self.ssheet = ss.SSheet(TOKEN)
         self.ssheet.get_sheet(self.ss_name)
 
-    def load_new_vendors(self):
+    def load_new_vendors(self) -> list:
         """Push new vendors to the sheet."""
         ss_vendors = list(self.ssheet.parent_rows.keys())
         new_vendors = utils.filter_list(self.df["Vendor"], ss_vendors)
