@@ -7,16 +7,16 @@ from dateutil import parser
 
 INPUTS_DIR: Final = "INPUTS/"
 TODAY: Final = datetime.today().strftime("%Y-%m-%d")
-CONSTANTS_FILE: Final = "src/constants.json"
+SHEET_FILE: Final = "src/sheet_name.json"
 
 
 def load_constants() -> dict:
-    with open(CONSTANTS_FILE, "r") as f:
+    with open(SHEET_FILE, "r") as f:
         return json.load(f)
 
 
 def save_constants(constants: dict) -> None:
-    with open(CONSTANTS_FILE, "w") as f:
+    with open(SHEET_FILE, "w") as f:
         json.dump(constants, f, indent=2)
 
 
@@ -56,6 +56,7 @@ def update_csv_isoformat(csv: str) -> None:
 def create_markdown(new_vendors: list, date: str) -> str:
     x = "\n- " + "\n- ".join(new_vendors)
     output = f"""Completed upload for {date}
+    
     New Vendors
 
     {x}

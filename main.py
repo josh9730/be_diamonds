@@ -11,6 +11,7 @@ from textual.validation import Function
 from textual.widgets import Button, DirectoryTree, Footer, Header, Input, Label, Markdown, Rule
 
 from src import data, ss, utils
+from src.constants import *
 
 
 class Output(Screen):
@@ -136,7 +137,7 @@ class MainApp(App):
         await self.push_screen(Waiting())
 
         await asyncio.gather(self.get_df(), self.get_ss())
-        self.ssheet.get_parents_and_first_child_data({"Prev Video": "Has Video", "Prev Inven": "% inv. w/ video"})
+        self.ssheet.get_parents_and_first_child_data({"Prev Video": SS_VIDEO_TRUE, "Prev Inven": SS_PERC_INV})
         new_vendors = self.load_new_vendors()
         self.df = data.add_comparison_columns(self.df, self.ssheet.previous_values)
         self.update_smartsheet()
@@ -159,10 +160,10 @@ class MainApp(App):
     def load_new_vendors(self) -> list:
         """Push new vendors to the sheet."""
         ss_vendors = list(self.ssheet.parent_rows.keys())
-        new_vendors = utils.filter_list(self.df["Vendor"], ss_vendors)
+        new_vendors = utils.filter_list(self.df[SS_VENDOR], ss_vendors)
         if new_vendors:
             for vendor_val in new_vendors:
-                self.ssheet.add_row_single_col_single_val("Vendor", vendor_val, update_parents=True)
+                self.ssheet.add_row_single_col_single_val(SS_VENDOR, vendor_val, update_parents=True)
             return new_vendors
         return []
 

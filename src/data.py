@@ -3,6 +3,8 @@ from pathlib import Path
 import pandas as pd
 import validators
 
+from src.constants import *
+
 
 def bool_fields_test(test_val: bool, reverse: bool):
     """Convert values to bool or pd.NA. Intent is to put valids in one Series and invalids in another,
@@ -57,18 +59,18 @@ def create_output_df(csv_path: Path) -> pd.DataFrame:
     """
     df = pd.read_csv(csv_path)
 
-    df["Valid V360"] = df["Video URL from Vendor"].apply(check_url_field, args=(False,))
-    df["Blank/Invalid"] = df["Video URL from Vendor"].apply(check_url_field, args=(True,))
-    df["Has Video"] = df["Video Upload"].apply(check_video_field, args=(False,))
-    df["No Video"] = df["Video Upload"].apply(check_video_field, args=(True,))
+    df[SS_VALID_URLS] = df[CSV_URL].apply(check_url_field, args=(False,))
+    df[SS_BLANK_URLS] = df[CSV_URL].apply(check_url_field, args=(True,))
+    df[SS_VIDEO_TRUE] = df[CSV_VIDEO].apply(check_video_field, args=(False,))
+    df[SS_VIDEO_FALSE] = df[CSV_VIDEO].apply(check_video_field, args=(True,))
 
-    df.rename(columns={"Video Upload": "Total Inv", "Supplier": "Vendor"}, inplace=True)
-    df = df[["Vendor", "Valid V360", "Blank/Invalid", "Has Video", "No Video", "Total Inv"]]
-    df = df.groupby("Vendor", as_index=False).count()
+    df.rename(columns={CSV_VIDEO: SS_VIDEO_INV, CSV_VENDOR: SS_VENDOR}, inplace=True)
+    df = df[[SS_VENDOR, SS_VALID_URLS, SS_BLANK_URLS, SS_VIDEO_TRUE, SS_VIDEO_FALSE, SS_VIDEO_INV]]
+    df = df.groupby(SS_VENDOR, as_index=False).count()
 
-    df["% inv. w/ video"] = ((df["Total Inv"] - df["Has Video"]) / df["Total Inv"]).round(4)
-    df["% Inv w/ URLs"] = (100 - (df["Total Inv"] - df["Valid V360"]) / df["Total Inv"] * 100).round(2)
-    df["% Inv w/ URLs"] = df["% Inv w/ URLs"].astype(str) + "%"
+    df[SS_PERC_INV] = ((df[SS_VIDEO_INV] - df[SS_VIDEO_TRUE]) / df[SS_VIDEO_INV]).round(4)
+    df[SS_PERC_INV_URL] = (100 - (df[SS_VIDEO_INV] - df[SS_VALID_URLS]) / df[SS_VIDEO_INV] * 100).round(2)
+    df[SS_PERC_INV_URL] = df[SS_PERC_INV_URL].astype(str) + "%"
 
     return df
 
@@ -86,17 +88,17 @@ def add_comparison_columns(df: pd.DataFrame, new_data: dict) -> pd.DataFrame:
     """
     if new_data:  # should only be empty if new sheet
         new_df = pd.DataFrame.from_dict(new_data, orient="index")
-        new_df.index.name = "Vendor"
-        df = df.join(new_df, on="Vendor")
+        new_df.index.name = SS_VENDOR
+        df = df.join(new_df, on=SS_VENDOR)
 
-        df["Prev Video"] = df["Prev Video"].fillna(df["Has Video"])
-        df["Prev Inven"] = df["Prev Inven"].fillna(df["% inv. w/ video"])
+        df["Prev Video"] = df["Prev Video"].fillna(df[SS_VIDEO_TRUE])
+        df["Prev Inven"] = df["Prev Inven"].fillna(df[SS_PERC_INV])
 
-        df["Difference Since Last"] = df["Has Video"] - df["Prev Video"]
+        df[SS_INV_DELTA] = df[SS_VIDEO_TRUE] - df["Prev Video"]
 
-        df["Change in % inv. w/ video"] = ((df["% inv. w/ video"] - df["Prev Inven"]) * 100).round(2)
-        df["Change in % inv. w/ video"] = df["Change in % inv. w/ video"].astype(str) + "%"
-        df["% inv. w/ video"] = (df["% inv. w/ video"] * 100).round(2).astype(str) + "%"
+        df[SS_VID_INV_DELTA] = ((df[SS_PERC_INV] - df["Prev Inven"]) * 100).round(2)
+        df[SS_VID_INV_DELTA] = df[SS_VID_INV_DELTA].astype(str) + "%"
+        df[SS_PERC_INV] = (df[SS_PERC_INV] * 100).round(2).astype(str) + "%"
 
         df.drop(["Prev Video", "Prev Inven"], axis="columns", inplace=True)
 
