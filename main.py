@@ -1,22 +1,16 @@
 import asyncio
-from datetime import datetime
 from pathlib import Path
-from typing import Final
 
 from textual import on, work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal
-from textual.message import Message
 from textual.reactive import reactive
 from textual.screen import ModalScreen, Screen
 from textual.validation import Function
 from textual.widgets import Button, DirectoryTree, Footer, Header, Input, Label, Markdown, Rule
 
-from src import utils, data, ss
-
-TODAY: Final = datetime.today().strftime("%Y-%m-%d")
-INPUTS_DIR: Final = "INPUTS/"
+from src import data, ss, utils
 
 
 class Output(Screen):
@@ -33,20 +27,13 @@ class Output(Screen):
 
 
 class Waiting(ModalScreen):
-    class Change(Message):
-        def __init__(self) -> None:
-            super().__init__()
-
-    def on_waiting_change(self):
-        self.query_one(Markdown).update("## Uploading to Smartsheet...")
-
     def compose(self) -> ComposeResult:
-        yield Markdown("# Parsing CSV...", classes="markdown")
+        yield Markdown("# Working...\n This may take several minutes.", classes="waiting")
 
 
 class Browser(ModalScreen):
     def compose(self) -> ComposeResult:
-        yield DirectoryTree(INPUTS_DIR)
+        yield DirectoryTree(utils.INPUTS_DIR)
 
     def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected):
         self.dismiss(event.path)
@@ -56,19 +43,29 @@ class MainApp(App):
     CSS_PATH = "src/gui.tcss"
     BINDINGS = [
         Binding(key="q", action="quit", description="Quit the app"),
-        ("d", "toggle_dark", "Toggle dark mode"),
     ]
+    ENABLE_COMMAND_PALETTE = False
+
+    ss_name = utils.load_constants()["sheet"]
     csv = reactive(utils.get_latest_csv())
-    date = reactive(TODAY)
+    date = reactive(utils.TODAY)
+    ssheet = None
+    df = None
 
     def compose(self) -> ComposeResult:
         yield Header()
+        yield Label("Smartsheet Name")
+        yield Input(id="sheet", value=self.ss_name, placeholder="Enter the smartsheet to upload to...")
+
+        yield Rule(line_style="heavy")
+
         yield Label("CSV to Upload. Defaults to most recent CSV.")
         yield Input(
             id="file",
             value="",
             placeholder="Enter the latest CSV file...",
             validators=[Function(utils.is_valid_file, "Not a valid file.")],
+            classes="validinput",
         )
         yield Label(id="file_label")
         with Horizontal():
@@ -78,12 +75,12 @@ class MainApp(App):
         yield Rule(line_style="heavy")
 
         yield Label("Date for the upload.")
-        with Horizontal(classes="inputs"):
-            yield Input(
-                id="date",
-                placeholder="Enter date for upload...",
-                validators=[Function(utils.is_valid_date, "Not a valid date.")],
-            )
+        yield Input(
+            id="date",
+            placeholder="Enter date for upload...",
+            validators=[Function(utils.is_valid_date, "Not a valid date.")],
+            classes="validinput",
+        )
         yield Label(id="date_label")
         yield Button("Today", id="today", variant="default")
 
@@ -98,10 +95,7 @@ class MainApp(App):
         self.title = "Diamonds Program"
         self.query_one("#file").focus()
 
-    def action_toggle_dark(self) -> None:
-        self.dark = not self.dark
-
-    @on(Input.Changed)
+    @on(Input.Changed, "#validinput")
     def show_invalid_reasons(self, event: Input.Changed) -> None:
         # Updating the UI to show the reasons why validation failed
         def update_label(control: str, msg: str) -> None:
@@ -111,6 +105,16 @@ class MainApp(App):
             update_label(event.control, event.validation_result.failure_descriptions[0])
         else:
             update_label(event.control, "Valid")
+
+    @on(Button.Pressed, "#submit")
+    def submit(self):
+        file = self.query_one("#file")
+        date = self.query_one("#date")
+        if all((file.value, date.value)) and all((file.is_valid, date.is_valid)):
+            self.csv = utils.INPUTS_DIR + file.value
+            self.date = date.value
+            self.ss_name = self.query_one("#sheet").value
+            self.main()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         def file_input(val: Path) -> None:
@@ -126,64 +130,60 @@ class MainApp(App):
                 self.query_one("#date").value = self.date
             case "exit":
                 self.app.exit()
-            case "submit":
-                file = self.query_one("#file")
-                date = self.query_one("#date")
-                if all((file.value, date.value)) and all((file.is_valid, date.is_valid)):
-                    self.csv = file.value
-                    self.date = date.value
-                    self.main()
 
     @work
-    async def main(self) -> None:
-        """
-        - row updates are to-bottom. if dates are before existing, it will not be in order
-        - will not ignore if duplicate date
-        - add more stuff to output
-        - split row updates to await them?
-        """
-        wait_screen = Waiting()
-        await self.push_screen(wait_screen)
-        df, ss = await asyncio.gather(get_df(self.csv), get_ss())
-        wait_screen.post_message(Waiting.Change())
-        new_vendors = await update_smartsheet(df, ss, self.date)
+    async def main(self):
+        await self.push_screen(Waiting())
 
-        x = "\n- " + "\n- ".join(new_vendors)
-        output = f"""\
-        New Vendors
-
-        {x}
-        """
+        await asyncio.gather(self.get_df(), self.get_ss())
+        self.ssheet.get_parents_and_first_child_data({"Prev Video": "Has Video", "Prev Inven": "% inv. w/ video"})
+        new_vendors = self.load_new_vendors()
+        self.df = data.add_comparison_columns(self.df, self.ssheet.previous_values)
+        self.update_smartsheet()
 
         self.pop_screen()
-        await self.push_screen(Output(output))
+        await self.push_screen(Output(utils.create_markdown(new_vendors, self.date)))
 
+        utils.update_csv_isoformat(self.csv)
+        utils.save_constants({"sheet": self.ss_name})
 
-async def get_df(csv):
-    # import pandas as pd
-    #
-    # return pd.read_json("df.json")
-    return data.create_output_df(INPUTS_DIR + csv)
-    # self.df.to_json("df.json")
+    async def get_df(self):
+        """Initialize dataframe."""
+        self.df = data.create_output_df(self.csv)
 
+    async def get_ss(self):
+        """Initialize smartsheet."""
+        self.ssheet = ss.SSheet(TOKEN)
+        self.ssheet.get_sheet(self.ss_name)
 
-async def get_ss():
-    SHEET_NAME = "COPYYYYYYY of Count of URL Status 2024"
-    TOKEN = ""
-    ssheet = ss.SSheet(TOKEN)
-    ssheet.get_sheet(SHEET_NAME)
-    ssheet.get_parents_first_column()
-    ss_vendors = list(ssheet.parent_rows.keys())
-    return ssheet, ss_vendors
+    def load_new_vendors(self):
+        """Push new vendors to the sheet."""
+        ss_vendors = list(self.ssheet.parent_rows.keys())
+        new_vendors = utils.filter_list(self.df["Vendor"], ss_vendors)
+        if new_vendors:
+            for vendor_val in new_vendors:
+                self.ssheet.add_row_single_col_single_val("Vendor", vendor_val, update_parents=True)
+            return new_vendors
+        return []
 
+    def update_smartsheet(self) -> None:
+        """Iterates over DataFrame and uploads by row by row. API does not allow rows with differing parentIds to be
+        added in same request.
 
-async def update_smartsheet(df, ss, date):
-    new_vendors = utils.filter_list(df["Vendor"], ss[1])
-    for vendor in new_vendors:
-        ss[0].add_new_row_first_col("Vendor", vendor, update_parents=True)
+        - Values in the first column are expected to be a date
+        - Even though the first column is dates, new rows are simply added as the first child row under that parent.
+        - Creates row_vals for the row, which are a list of cells. Each cell element will have the column_name and
+          value fields
+        - This is sent to the smartsheet method along with the parent name, i.e. the Vendor (df_row[0])
+        """
+        df_cols = list(self.df.columns)
+        for _, df_row in self.df.iterrows():
+            row_vals = []
+            for i, col in enumerate(df_cols):
+                val = self.date if i == 0 else df_row[i]
+                row_vals.append({"col_name": col, "value": val})
 
-    ss[0].add_child_rows_to_sheet(df, date)
-    return new_vendors
+            self.ssheet.add_child_rows(row_vals, df_row[0])
 
 
 app = MainApp()

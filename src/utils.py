@@ -1,10 +1,27 @@
+import json
+from datetime import datetime
 from pathlib import Path
+from typing import Final, Iterable
+
 from dateutil import parser
-from typing import Iterable
+
+INPUTS_DIR: Final = "INPUTS/"
+TODAY: Final = datetime.today().strftime("%Y-%m-%d")
+CONSTANTS_FILE: Final = "src/constants.json"
+
+
+def load_constants() -> dict:
+    with open(CONSTANTS_FILE, "r") as f:
+        return json.load(f)
+
+
+def save_constants(constants: dict) -> None:
+    with open(CONSTANTS_FILE, "w") as f:
+        json.dump(constants, f, indent=2)
 
 
 def get_latest_csv() -> Path:
-    csv_all = Path("INPUTS/").glob("*.csv")
+    csv_all = Path(INPUTS_DIR).glob("*.csv")
     try:
         return max(csv_all, key=Path.stat).name
     except ValueError:  # no csv files found
@@ -21,7 +38,7 @@ def is_valid_date(value: str) -> bool:
 
 
 def is_valid_file(value: str) -> bool:
-    file = Path("INPUTS/" + value)
+    file = Path(INPUTS_DIR + value)
     if not file.is_file():
         return False
     return True
@@ -31,7 +48,16 @@ def filter_list(_list: list, filter_list: Iterable) -> list:
     return [i for i in _list if i not in filter_list]
 
 
-def retrieve_token() -> str:
-    """Retrieve smartsheet API token from replit."""
+def update_csv_isoformat(csv: str) -> None:
+    """Update name to YYYYMMDD.csv format."""
+    Path(csv).rename(f"{INPUTS_DIR}{TODAY}.csv")
 
-    return os.environ["SS_TOKEN"]
+
+def create_markdown(new_vendors: list, date: str) -> str:
+    x = "\n- " + "\n- ".join(new_vendors)
+    output = f"""Completed upload for {date}
+    New Vendors
+
+    {x}
+    """
+    return output
