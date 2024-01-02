@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from pathlib import Path
 
 from textual import on, work
@@ -6,38 +7,18 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.reactive import reactive
-from textual.screen import ModalScreen, Screen
 from textual.validation import Function
-from textual.widgets import Button, DirectoryTree, Footer, Header, Input, Label, Markdown, Rule
+from textual.widgets import Button, Footer, Header, Input, Label, Rule
 
 from src import data, ss, utils
 from src.constants import *
+from src.screens import Browser, ErrApp, Output, Waiting
 
+LOG_DIR = Path("logs/")
+if not LOG_DIR.exists():
+    LOG_DIR.mkdir()
 
-class Output(Screen):
-    def __init__(self, output: str) -> None:
-        self.output = output
-        super().__init__()
-
-    def compose(self) -> ComposeResult:
-        yield Markdown(self.output)
-        yield Button("Finish", id="exit", variant="primary")
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        self.app.exit()
-
-
-class Waiting(ModalScreen):
-    def compose(self) -> ComposeResult:
-        yield Markdown("# Working...\n This may take several minutes.", classes="waiting")
-
-
-class Browser(ModalScreen):
-    def compose(self) -> ComposeResult:
-        yield DirectoryTree(utils.INPUTS_DIR)
-
-    def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected) -> None:
-        self.dismiss(event.path)
+logging.basicConfig(filename=f"logs/{utils.TODAY}.log", filemode="w")
 
 
 class MainApp(App):
@@ -134,19 +115,25 @@ class MainApp(App):
 
     @work
     async def main(self) -> None:
-        await self.push_screen(Waiting())
+        try:
+            await self.push_screen(Waiting())
 
-        await asyncio.gather(self.get_df(), self.get_ss())
-        self.ssheet.get_parents_and_first_child_data({"Prev Video": SS_VIDEO_TRUE, "Prev Inven": SS_PERC_INV})
-        new_vendors = self.load_new_vendors()
-        self.df = data.add_comparison_columns(self.df, self.ssheet.previous_values)
-        self.update_smartsheet()
+            await asyncio.gather(self.get_df(), self.get_ss())
+            self.ssheet.get_parents_and_first_child_data({"Prev Video": SS_VIDEO_TRUE, "Prev Inven": SS_PERC_INV})
+            new_vendors = self.load_new_vendors()
+            self.df = data.add_comparison_columns(self.df, self.ssheet.previous_values)
+            self.update_smartsheet()
 
-        self.pop_screen()
-        await self.push_screen(Output(utils.create_markdown(new_vendors, self.date)))
+            self.pop_screen()
+            await self.push_screen(Output(utils.create_markdown(new_vendors, self.date)))
 
-        utils.update_csv_isoformat(self.csv)
-        utils.save_constants({"sheet": self.ss_name})
+            utils.update_csv_isoformat(self.csv)
+            utils.save_constants({"sheet": self.ss_name})
+
+        # all exceptions are sent to logs, and the app is exited with return_code 4 to trigger the error app
+        except Exception as err:
+            logging.exception(err, exc_info=True, stack_info=True)
+            self.exit(return_code=4, message=err)
 
     async def get_df(self) -> None:
         """Initialize dataframe."""
@@ -188,5 +175,8 @@ class MainApp(App):
 
 
 app = MainApp()
+
 if __name__ == "__main__":
-    app.run()
+    a = app.run()
+    if app.return_code == 4:
+        ErrApp().run()
