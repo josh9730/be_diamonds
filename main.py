@@ -79,7 +79,8 @@ class MainApp(App):
 
     @on(Input.Changed, "#validinput")
     def show_invalid_reasons(self, event: Input.Changed) -> None:
-        # Updating the UI to show the reasons why validation failed
+        """Updates the UI to show the reasons why validation failed."""
+
         def update_label(control: str, msg: str) -> None:
             self.query_one(f"#{control.id}_label").update(msg)
 
@@ -115,6 +116,18 @@ class MainApp(App):
 
     @work
     async def main(self) -> None:
+        """Main function to process data.
+
+        - creates the DataFrame and initializes smartsheets
+        - get initial data from SS needed for processing the comparison data
+            - these are values that are being compared to the current data using data from the smartsheet
+            - i.e. previous uploads
+        - upload all new vendors (i.e. not present on smartsheet)
+        - update DF with comparison data
+        - update smartsheet
+
+        All exceptions are sent to log, and the app is exited with return_code 4 to trigger the error app.
+        """
         try:
             await self.push_screen(Waiting())
 
@@ -130,7 +143,6 @@ class MainApp(App):
             utils.update_csv_isoformat(self.csv)
             utils.save_constants({"sheet": self.ss_name})
 
-        # all exceptions are sent to logs, and the app is exited with return_code 4 to trigger the error app
         except Exception as err:
             logging.exception(err, exc_info=True, stack_info=True)
             self.exit(return_code=4, message=err)
