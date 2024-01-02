@@ -21,8 +21,8 @@ CSV_URL: Final = "Video URL from Vendor"
 CSV_VIDEO: Final = "Video Upload"
 
 # values to check for in URLs
-URL_TEST_STRINGS: Final = (
+URL_TEST_STRINGS: Final = [
     "diacam",
     "mp4",
     "gem360",
-)
+]

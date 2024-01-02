@@ -156,8 +156,11 @@ class MainApp(App):
         self.ssheet = ss.SSheet()
         self.ssheet.get_sheet(self.ss_name)
 
-    def load_new_vendors(self) -> list:
-        """Push new vendors to the sheet."""
+    def load_new_vendors(self) -> list[str | None]:
+        """Push new vendors to the sheet.
+
+        Returns a list of vendors or empty list
+        """
         ss_vendors = list(self.ssheet.parent_rows.keys())
         new_vendors = utils.filter_list(self.df[SS_VENDOR], ss_vendors)
         if new_vendors:
