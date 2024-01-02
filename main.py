@@ -98,6 +98,7 @@ class MainApp(App):
             self.date = date.value
             self.ss_name = self.query_one("#sheet").value
             self.main()
+            # self.run_worker(self.main(), exit_on_error=False)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         def file_input(val: Path) -> None:
@@ -127,6 +128,8 @@ class MainApp(App):
         - update smartsheet
 
         All exceptions are sent to log, and the app is exited with return_code 4 to trigger the error app.
+        Note: Using worker.error does not capture the actual exception raised, only the worker's traceback
+              In order to both log the exception and trigger the error screen, a try/except block was used here
         """
         try:
             await self.push_screen(Waiting())
