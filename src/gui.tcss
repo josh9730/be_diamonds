@@ -1,6 +1,6 @@
 Screen {
     align: center middle;
-    padding: 5;
+    padding: 1;
 }
 Label {
     margin: 1 1;
@@ -31,4 +31,8 @@ Waiting {
 }
 .waiting {
     width: 50;
+}
+Button {
+    height: 3;
+    offset-y: 1;
 }

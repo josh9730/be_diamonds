@@ -42,29 +42,28 @@ class MainApp(App):
         yield Rule(line_style="heavy")
 
         yield Label("CSV to Upload. Defaults to most recent CSV.")
-        yield Input(
-            id="file",
-            value="",
-            placeholder="Enter the latest CSV file...",
-            validators=[Function(utils.is_valid_file, "Not a valid file.")],
-            classes="validinput",
-        )
-        yield Label(id="file_label")
         with Horizontal():
+            yield Input(
+                id="file",
+                value="",
+                placeholder="Enter the latest CSV file...",
+                validators=[Function(utils.is_valid_file, "Not a valid file.")],
+                classes="validinput",
+            )
             yield Button("Get Recent", id="recent", variant="default")
             yield Button("Browse", id="browse", variant="primary")
 
         yield Rule(line_style="heavy")
 
         yield Label("Date for the upload.")
-        yield Input(
-            id="date",
-            placeholder="Enter date for upload...",
-            validators=[Function(utils.is_valid_date, "Not a valid date.")],
-            classes="validinput",
-        )
-        yield Label(id="date_label")
-        yield Button("Today", id="today", variant="default")
+        with Horizontal():
+            yield Input(
+                id="date",
+                placeholder="Enter date for upload...",
+                validators=[Function(utils.is_valid_date, "Not a valid date.")],
+                classes="validinput",
+            )
+            yield Button("Today", id="today", variant="default")
 
         yield Rule(line_style="heavy")
 
