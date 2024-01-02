@@ -36,8 +36,7 @@ def check_url_field(url: str, reverse: bool):
     if not validators.url(url):  # handle invalid types
         url = ""
 
-    test_strings = ("diacam", "mp4", "gem360")
-    test = not (any(i in url for i in test_strings) or len(url) < 6)
+    test = not (any(i in url for i in URL_TEST_STRINGS) or len(url) < 6)
     return bool_fields_test(test, reverse)
 
 

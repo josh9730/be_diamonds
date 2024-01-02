@@ -74,7 +74,7 @@ class MainApp(App):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.title = "Diamonds Program"
+        self.title = UI_TITLE
         self.query_one("#file").focus()
 
     @on(Input.Changed, "#validinput")
