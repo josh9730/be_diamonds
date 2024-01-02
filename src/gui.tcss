@@ -1,6 +1,5 @@
 Screen {
     align: center middle;
-    padding: 1;
 }
 Label {
     margin: 1 1;
@@ -35,4 +34,10 @@ Waiting {
 Button {
     height: 3;
     offset-y: 1;
+}
+Container {
+    width: 1fr;
+}
+Horizontal {
+    height: 5;
 }

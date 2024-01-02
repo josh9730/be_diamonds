@@ -5,7 +5,7 @@ from pathlib import Path
 from textual import on, work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal
+from textual.containers import Horizontal, Container, Vertical
 from textual.reactive import reactive
 from textual.validation import Function
 from textual.widgets import Button, Footer, Header, Input, Label, Rule
@@ -36,40 +36,39 @@ class MainApp(App):
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield Label("Smartsheet Name")
-        yield Input(id="sheet", value=self.ss_name, placeholder="Enter the smartsheet to upload to...")
 
-        yield Rule(line_style="heavy")
+        with Container():
+            yield Label("Smartsheet Name")
+            yield Input(id="sheet", value=self.ss_name, placeholder="Enter the smartsheet to upload to...")
+            yield Rule(line_style="heavy")
+            yield Label("CSV to Upload. Defaults to most recent CSV.")
+            with Horizontal():
+                yield Input(
+                    id="file",
+                    value="",
+                    placeholder="Enter the latest CSV file...",
+                    validators=[Function(utils.is_valid_file, "Not a valid file.")],
+                    classes="validinput",
+                )
+                yield Button("Get Recent", id="recent", variant="default")
+                yield Button("Browse", id="browse", variant="primary")
+            yield Rule(line_style="heavy")
 
-        yield Label("CSV to Upload. Defaults to most recent CSV.")
-        with Horizontal():
-            yield Input(
-                id="file",
-                value="",
-                placeholder="Enter the latest CSV file...",
-                validators=[Function(utils.is_valid_file, "Not a valid file.")],
-                classes="validinput",
-            )
-            yield Button("Get Recent", id="recent", variant="default")
-            yield Button("Browse", id="browse", variant="primary")
-
-        yield Rule(line_style="heavy")
-
-        yield Label("Date for the upload.")
-        with Horizontal():
-            yield Input(
-                id="date",
-                placeholder="Enter date for upload...",
-                validators=[Function(utils.is_valid_date, "Not a valid date.")],
-                classes="validinput",
-            )
-            yield Button("Today", id="today", variant="default")
-
-        yield Rule(line_style="heavy")
-
-        with Horizontal():
-            yield Button("Submit", id="submit", variant="success")
-            yield Button("Exit", id="exit", variant="error")
+        with Container():
+            yield Label("Date for the upload.")
+            with Horizontal():
+                yield Input(
+                    id="date",
+                    placeholder="Enter date for upload...",
+                    validators=[Function(utils.is_valid_date, "Not a valid date.")],
+                    classes="validinput",
+                )
+                yield Button("Today", id="today", variant="default")
+            yield Rule(line_style="heavy")
+            with Horizontal():
+                yield Button("Submit", id="submit", variant="success")
+                yield Button("Exit", id="exit", variant="error")
+                
         yield Footer()
 
     def on_mount(self) -> None:
