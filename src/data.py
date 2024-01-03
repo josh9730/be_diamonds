@@ -3,6 +3,7 @@ from pathlib import Path
 import pandas as pd
 import validators
 
+from src import utils
 from src.constants import *
 
 
@@ -66,9 +67,10 @@ def create_output_df(csv_path: Path) -> pd.DataFrame:
     df.rename(columns={CSV_VIDEO: SS_VIDEO_INV, CSV_VENDOR: SS_VENDOR}, inplace=True)
     df = df[[SS_VENDOR, SS_VALID_URLS, SS_BLANK_URLS, SS_VIDEO_TRUE, SS_VIDEO_FALSE, SS_VIDEO_INV]]
     df = df.groupby(SS_VENDOR, as_index=False).count()
+    df[SS_DATE] = utils.TODAY
 
-    df[SS_PERC_INV] = ((df[SS_VIDEO_INV] - df[SS_VIDEO_TRUE]) / df[SS_VIDEO_INV]).round(4)
-    df[SS_PERC_INV_URL] = (100 - (df[SS_VIDEO_INV] - df[SS_VALID_URLS]) / df[SS_VIDEO_INV] * 100).round(2)
+    df[SS_PERC_INV] = 1 - ((df[SS_VIDEO_INV] - df[SS_VIDEO_TRUE]) / df[SS_VIDEO_INV])
+    df[SS_PERC_INV_URL] = (100 - ((df[SS_VIDEO_INV] - df[SS_VALID_URLS]) / df[SS_VIDEO_INV] * 100)).round(2)
     df[SS_PERC_INV_URL] = df[SS_PERC_INV_URL].astype(str) + "%"
 
     return df
@@ -100,5 +102,7 @@ def add_comparison_columns(df: pd.DataFrame, new_data: dict) -> pd.DataFrame:
         df[SS_PERC_INV] = (df[SS_PERC_INV] * 100).round(2).astype(str) + "%"
 
         df.drop(["Prev Video", "Prev Inven"], axis="columns", inplace=True)
+
+        df.to_json("df.json")
 
     return df

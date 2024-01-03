@@ -14,6 +14,7 @@ SS_PERC_INV: Final = "% inv. w/ video"
 SS_PERC_INV_URL: Final = "% Inv w/ URLs"
 SS_INV_DELTA: Final = "Difference Since Last"
 SS_VID_INV_DELTA: Final = "Change in % inv. w/ video"
+SS_DATE: Final = "Date"
 
 # Column names on CSV
 CSV_VENDOR: Final = "Supplier"

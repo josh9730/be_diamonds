@@ -1,7 +1,7 @@
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.screen import ModalScreen, Screen
-from textual.widgets import Button, DirectoryTree, Markdown
+from textual.widgets import Button, DirectoryTree, Markdown, Pretty, Rule
 
 from src import utils
 
@@ -12,8 +12,11 @@ class Output(Screen):
         super().__init__()
 
     def compose(self) -> ComposeResult:
-        yield Markdown(self.output)
-        yield Button("Finish", id="exit", variant="primary")
+        yield Markdown(f"# Completed uploads for {utils.TODAY}")
+        yield Button("Finish", classes="final", variant="primary")
+        yield Rule(line_style="heavy")
+        yield Markdown("## New Vendors: ")
+        yield Pretty(self.output)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         self.app.exit()

@@ -4,9 +4,11 @@ from pathlib import Path
 from typing import Final, Iterable
 
 from dateutil import parser
+from pytz import timezone
 
+TIMEZONE: Final = "US/Pacific"
+TODAY: Final = datetime.now(timezone(TIMEZONE)).strftime("%Y-%m-%d")  # replit is in UTC
 INPUTS_DIR: Final = "INPUTS/"
-TODAY: Final = datetime.today().strftime("%Y-%m-%d")
 SHEET_FILE: Final = "src/sheet_name.json"
 
 

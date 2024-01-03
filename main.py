@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import logging
 from pathlib import Path
@@ -5,7 +6,7 @@ from pathlib import Path
 from textual import on, work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Container, Vertical
+from textual.containers import Container, Horizontal
 from textual.reactive import reactive
 from textual.validation import Function
 from textual.widgets import Button, Footer, Header, Input, Label, Rule
@@ -68,7 +69,7 @@ class MainApp(App):
             with Horizontal():
                 yield Button("Submit", id="submit", variant="success")
                 yield Button("Exit", id="exit", variant="error")
-                
+
         yield Footer()
 
     def on_mount(self) -> None:
@@ -96,7 +97,6 @@ class MainApp(App):
             self.date = date.value
             self.ss_name = self.query_one("#sheet").value
             self.main()
-            # self.run_worker(self.main(), exit_on_error=False)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         def file_input(val: Path) -> None:
@@ -139,7 +139,8 @@ class MainApp(App):
             self.update_smartsheet()
 
             self.pop_screen()
-            await self.push_screen(Output(utils.create_markdown(new_vendors, self.date)))
+            # await self.push_screen(Output(utils.create_markdown(new_vendors, self.date)))
+            await self.push_screen(Output(new_vendors))
 
             utils.update_csv_isoformat(self.csv)
             utils.save_constants({"sheet": self.ss_name})
@@ -174,8 +175,7 @@ class MainApp(App):
         """Iterates over DataFrame and uploads by row by row. API does not allow rows with differing parentIds to be
         added in same request.
 
-        - Values in the first column are expected to be a date
-        - Even though the first column is dates, new rows are simply added as the first child row under that parent.
+        - New rows are simply added as the first child row under that parent.
         - Creates row_vals for the row, which are a list of cells. Each cell element will have the column_name and
           value fields
         - This is sent to the smartsheet method along with the parent name, i.e. the Vendor (df_row[0])
@@ -184,8 +184,7 @@ class MainApp(App):
         for _, df_row in self.df.iterrows():
             row_vals = []
             for i, col in enumerate(df_cols):
-                val = self.date if i == 0 else df_row[i]
-                row_vals.append({"col_name": col, "value": val})
+                row_vals.append({"col_name": col, "value": df_row[i]})
 
             self.ssheet.add_child_rows(row_vals, df_row[0])
 
@@ -193,6 +192,13 @@ class MainApp(App):
 app = MainApp()
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run PD Launches tool.")
+    parser.add_argument(
+        "-k",
+        "--key",
+        help="Smartsheet API Key",
+    )
+
     a = app.run()
     if app.return_code == 4:
         ErrApp().run()
