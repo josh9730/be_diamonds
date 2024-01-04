@@ -1,4 +1,3 @@
-import argparse
 import asyncio
 import logging
 from pathlib import Path
@@ -192,13 +191,6 @@ class MainApp(App):
 app = MainApp()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run PD Launches tool.")
-    parser.add_argument(
-        "-k",
-        "--key",
-        help="Smartsheet API Key",
-    )
-
     a = app.run()
     if app.return_code == 4:
         ErrApp().run()

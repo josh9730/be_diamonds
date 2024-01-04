@@ -87,9 +87,10 @@ class SSheet:
 
             # create parents dict
             if not row.get("parentId"):
-                parent_name = row["cells"][0]["value"]
-                self.parent_rows.update({parent_name: row["id"]})
-                parent_index = i
+                parent_name = row["cells"][0].get("value")
+                if parent_name:  # helps handle empty rows
+                    self.parent_rows.update({parent_name: row["id"]})
+                    parent_index = i
 
             else:
                 if cell_cols and i == parent_index + 1:  # most recent should be directly below parent, ie desc. order
