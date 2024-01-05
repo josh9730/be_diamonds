@@ -150,7 +150,7 @@ class MainApp(App):
 
     async def get_df(self) -> None:
         """Initialize dataframe."""
-        self.df = data.create_output_df(self.csv)
+        self.df = data.create_output_df(self.csv, self.date)
 
     async def get_ss(self) -> None:
         """Initialize smartsheet."""
