@@ -102,6 +102,4 @@ def add_comparison_columns(df: pd.DataFrame, new_data: dict) -> pd.DataFrame:
 
         df.drop(["Prev Video", "Prev Inven"], axis="columns", inplace=True)
 
-        df.to_json("df.json")
-
     return df
