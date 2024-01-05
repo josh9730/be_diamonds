@@ -141,7 +141,7 @@ class MainApp(App):
             # await self.push_screen(Output(utils.create_markdown(new_vendors, self.date)))
             await self.push_screen(Output(new_vendors))
 
-            utils.update_csv_isoformat(self.csv)
+            utils.update_csv_isoformat(self.csv, self.date)
             utils.save_constants({"sheet": self.ss_name})
 
         except Exception as err:

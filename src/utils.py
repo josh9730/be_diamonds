@@ -50,9 +50,9 @@ def filter_list(_list: list, filter_list: Iterable) -> list:
     return [i for i in _list if i not in filter_list]
 
 
-def update_csv_isoformat(csv: str) -> None:
+def update_csv_isoformat(csv: str, date=TODAY) -> None:
     """Update name to YYYYMMDD.csv format."""
-    Path(csv).rename(f"{INPUTS_DIR}{TODAY}.csv")
+    Path(csv).rename(f"{INPUTS_DIR}{date}.csv")
 
 
 def create_markdown(new_vendors: list, date: str) -> str:
