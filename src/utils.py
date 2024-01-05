@@ -50,7 +50,7 @@ def filter_list(_list: list, filter_list: Iterable) -> list:
     return [i for i in _list if i not in filter_list]
 
 
-def update_csv_isoformat(csv: str, date=TODAY) -> None:
+def update_csv_isoformat(csv: str, date: str = TODAY) -> None:
     """Update name to YYYYMMDD.csv format."""
     Path(csv).rename(f"{INPUTS_DIR}{date}.csv")
 
