@@ -56,6 +56,15 @@ def create_output_df(csv_path: Path, date: str) -> pd.DataFrame:
         but is needed for comparisons in add_columns()
     - % Inv w/ URLs: % of inventory with URLs. Not needed for any comparisons
     """
+
+    def check_type_field(type_val: str | None) -> str:
+        """Check the CSV_TYPE field and coerce to correct value."""
+        if "lab" in type_val.lower():
+            return "Lab"
+        elif type_val:
+            return "Natural"
+        return ""
+
     df = pd.read_csv(csv_path)
 
     df[SS_VALID_URLS] = df[CSV_URL].apply(check_url_field, args=(False,))
@@ -63,10 +72,15 @@ def create_output_df(csv_path: Path, date: str) -> pd.DataFrame:
     df[SS_VIDEO_TRUE] = df[CSV_VIDEO].apply(check_video_field, args=(False,))
     df[SS_VIDEO_FALSE] = df[CSV_VIDEO].apply(check_video_field, args=(True,))
 
-    df.rename(columns={CSV_VIDEO: SS_VIDEO_INV, CSV_VENDOR: SS_VENDOR}, inplace=True)
-    df = df[[SS_VENDOR, SS_VALID_URLS, SS_BLANK_URLS, SS_VIDEO_TRUE, SS_VIDEO_FALSE, SS_VIDEO_INV]]
-    df = df.groupby(SS_VENDOR, as_index=False).count()
+    df_type = df[[CSV_VENDOR, CSV_TYPE]].drop_duplicates(CSV_VENDOR)
+    df = df[[CSV_VENDOR, SS_VALID_URLS, SS_BLANK_URLS, SS_VIDEO_TRUE, SS_VIDEO_FALSE, CSV_VIDEO]]
+
+    df = df.groupby(CSV_VENDOR, as_index=False).count()
+    df = pd.merge(df, df_type, on=CSV_VENDOR)
     df[SS_DATE] = date
+    df[CSV_TYPE] = df[CSV_TYPE].apply(lambda x: check_type_field(x))
+
+    df.rename(columns={CSV_VIDEO: SS_VIDEO_INV, CSV_VENDOR: SS_VENDOR, CSV_TYPE: SS_TYPE}, inplace=True)
 
     df[SS_PERC_INV] = 1 - ((df[SS_VIDEO_INV] - df[SS_VIDEO_TRUE]) / df[SS_VIDEO_INV])
     df[SS_PERC_INV_URL] = (100 - ((df[SS_VIDEO_INV] - df[SS_VALID_URLS]) / df[SS_VIDEO_INV] * 100)).round(2)

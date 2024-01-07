@@ -4,6 +4,7 @@ from typing import Final
 UI_TITLE: Final = "Diamonds Program"
 
 # Column names on Smartsheet
+# Note: Adding columns will have no effect on the output. This is only for name changes
 SS_VENDOR: Final = "Vendor"
 SS_VALID_URLS: Final = "Valid V360"
 SS_BLANK_URLS: Final = "Blank/Invalid"
@@ -15,11 +16,13 @@ SS_PERC_INV_URL: Final = "% Inv w/ URLs"
 SS_INV_DELTA: Final = "Difference Since Last"
 SS_VID_INV_DELTA: Final = "Change in % inv. w/ video"
 SS_DATE: Final = "Date"
+SS_TYPE: Final = "Type"
 
 # Column names on CSV
 CSV_VENDOR: Final = "Supplier"
 CSV_URL: Final = "Video URL from Vendor"
 CSV_VIDEO: Final = "Video Upload"
+CSV_TYPE: Final = "Cert of Origin"
 
 # values to check for in URLs
 URL_TEST_STRINGS: Final = [

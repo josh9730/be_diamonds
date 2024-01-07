@@ -135,6 +135,10 @@ class MainApp(App):
             self.ssheet.get_parents_and_first_child_data({"Prev Video": SS_VIDEO_TRUE, "Prev Inven": SS_PERC_INV})
             new_vendors = self.load_new_vendors()
             self.df = data.add_comparison_columns(self.df, self.ssheet.previous_values)
+            utils.save_df_output(self.df)
+
+            exit()
+
             self.update_smartsheet()
 
             self.pop_screen()

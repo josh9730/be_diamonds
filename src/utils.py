@@ -5,6 +5,7 @@ from typing import Final, Iterable
 
 from dateutil import parser
 from pytz import timezone
+from tabulate import tabulate
 
 TIMEZONE: Final = "US/Pacific"
 TODAY: Final = datetime.now(timezone(TIMEZONE)).strftime("%Y-%m-%d")  # replit is in UTC
@@ -15,6 +16,13 @@ SHEET_FILE: Final = "src/sheet_name.json"
 def load_constants() -> dict:
     with open(SHEET_FILE, "r") as f:
         return json.load(f)
+
+
+def save_df_output(df: "pd.DataFrame") -> None:
+    """Save DataFrame as an table for reference."""
+    df_format = tabulate(df, headers="keys", tablefmt="psql")
+    with open("logs/df_output.txt", "w") as f:
+        f.write(f"DATE: {TODAY}\n\n{df_format}")
 
 
 def save_constants(constants: dict) -> None:
