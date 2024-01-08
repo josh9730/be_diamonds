@@ -137,12 +137,8 @@ class MainApp(App):
             self.df = data.add_comparison_columns(self.df, self.ssheet.previous_values)
             utils.save_df_output(self.df)
 
-            exit()
-
             self.update_smartsheet()
-
             self.pop_screen()
-            # await self.push_screen(Output(utils.create_markdown(new_vendors, self.date)))
             await self.push_screen(Output(new_vendors))
 
             utils.update_csv_isoformat(self.csv, self.date)
