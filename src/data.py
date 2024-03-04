@@ -109,7 +109,8 @@ def add_comparison_columns(df: pd.DataFrame, new_data: dict) -> pd.DataFrame:
         df["Prev Inven"] = df["Prev Inven"].fillna(df[SS_PERC_INV])
 
         df[SS_INV_DELTA] = df[SS_VIDEO_TRUE] - df["Prev Video"]
-
+        df["Prev Inven"] = df["Prev Inven"].str.rstrip('%').astype('float') / 100.0  # inputs from SS are str with %
+        
         df[SS_VID_INV_DELTA] = ((df[SS_PERC_INV] - df["Prev Inven"]) * 100).round(2)
         df[SS_VID_INV_DELTA] = df[SS_VID_INV_DELTA].astype(str) + "%"
         df[SS_PERC_INV] = (df[SS_PERC_INV] * 100).round(2).astype(str) + "%"

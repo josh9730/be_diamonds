@@ -24,7 +24,13 @@ Input {
 Vertical {
     width: 50;
 }
-
+Checkbox {
+    color: red;
+}
+ToggleButton.-on {
+    color: green;
+    text-style: bold;
+}
 Waiting {
     align: center middle;
     width: 50;

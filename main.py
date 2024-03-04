@@ -8,7 +8,7 @@ from textual.binding import Binding
 from textual.containers import Container, Horizontal
 from textual.reactive import reactive
 from textual.validation import Function
-from textual.widgets import Button, Footer, Header, Input, Label, Rule
+from textual.widgets import Button, Footer, Header, Input, Label, Rule, Checkbox
 
 from src import data, ss, utils
 from src.constants import *
@@ -65,6 +65,7 @@ class MainApp(App):
                 )
                 yield Button("Today", id="today", variant="default")
             yield Rule(line_style="heavy")
+            yield Checkbox(id="ss_val", label="Upload to Smartsheet?", value=True)
             with Horizontal():
                 yield Button("Submit", id="submit", variant="success")
                 yield Button("Exit", id="exit", variant="error")
@@ -91,9 +92,11 @@ class MainApp(App):
     def submit(self) -> None:
         file = self.query_one("#file")
         date = self.query_one("#date")
+        ss_input = self.query_one("#ss_val")
         if all((file.value, date.value)) and all((file.is_valid, date.is_valid)):
             self.csv = utils.INPUTS_DIR + file.value
             self.date = date.value
+            self.ss_input = ss_input.value
             self.ss_name = self.query_one("#sheet").value
             self.main()
 
@@ -137,7 +140,8 @@ class MainApp(App):
             self.df = data.add_comparison_columns(self.df, self.ssheet.previous_values)
             utils.save_df_output(self.df)
 
-            self.update_smartsheet()
+            if self.ss_input:
+                self.update_smartsheet()
             self.pop_screen()
             await self.push_screen(Output(new_vendors))
 
