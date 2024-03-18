@@ -3,17 +3,36 @@ from datetime import datetime
 from pathlib import Path
 from typing import Final, Iterable
 
+import yaml
 from dateutil import parser
 from pytz import timezone
 from tabulate import tabulate
 
+SHEET_NAME_FILE: str = "src/sheet_name.yaml"
 TIMEZONE: Final = "US/Pacific"
 TODAY: Final = datetime.now(timezone(TIMEZONE)).strftime("%Y-%m-%d")  # replit is in UTC
+
 INPUTS_DIR: Final = "INPUTS/"
 SHEET_FILE: Final = "src/sheet_name.json"
 
 
-def load_constants() -> dict:
+# FINAL
+
+
+def get_sheet_name(_type: str) -> str:
+    with open(SHEET_NAME_FILE, "r") as f:
+        return yaml.safe_load(f)[_type]
+
+
+def save_sheet_name(sheet_name: str, _type: str) -> None:
+    with open(SHEET_NAME_FILE, "w") as f:
+        yaml.safe_dump({_type: sheet_name}, f)
+
+
+# OLD
+
+
+def get_ss_name() -> dict:
     with open(SHEET_FILE, "r") as f:
         return json.load(f)
 

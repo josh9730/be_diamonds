@@ -8,7 +8,7 @@ from textual.binding import Binding
 from textual.containers import Container, Horizontal
 from textual.reactive import reactive
 from textual.validation import Function
-from textual.widgets import Button, Footer, Header, Input, Label, Rule, Checkbox
+from textual.widgets import Button, Checkbox, Footer, Header, Input, Label, Rule
 
 from src import data, ss, utils
 from src.constants import *
@@ -28,7 +28,7 @@ class MainApp(App):
     ]
     ENABLE_COMMAND_PALETTE = False
 
-    ss_name = utils.load_constants()["sheet"]
+    ss_name = utils.get_ss_name()["sheet"]
     csv = reactive(utils.get_latest_csv())
     date = reactive(utils.TODAY)
     ssheet = None
@@ -39,7 +39,11 @@ class MainApp(App):
 
         with Container():
             yield Label("Smartsheet Name")
-            yield Input(id="sheet", value=self.ss_name, placeholder="Enter the smartsheet to upload to...")
+            yield Input(
+                id="sheet",
+                value=self.ss_name,
+                placeholder="Enter the smartsheet to upload to...",
+            )
             yield Rule(line_style="heavy")
             yield Label("CSV to Upload. Defaults to most recent CSV.")
             with Horizontal():
@@ -135,7 +139,9 @@ class MainApp(App):
             await self.push_screen(Waiting())
 
             await asyncio.gather(self.get_df(), self.get_ss())
-            self.ssheet.get_parents_and_first_child_data({"Prev Video": SS_VIDEO_TRUE, "Prev Inven": SS_PERC_INV})
+            self.ssheet.get_parents_and_first_child_data(
+                {"Prev Video": SS_VIDEO_TRUE, "Prev Inven": SS_PERC_INV}
+            )
             new_vendors = self.load_new_vendors()
             self.df = data.add_comparison_columns(self.df, self.ssheet.previous_values)
             utils.save_df_output(self.df)
@@ -170,7 +176,9 @@ class MainApp(App):
         new_vendors = utils.filter_list(self.df[SS_VENDOR], ss_vendors)
         if new_vendors:
             for vendor_val in new_vendors:
-                self.ssheet.add_row_single_col_single_val(SS_VENDOR, vendor_val, update_parents=True)
+                self.ssheet.add_row_single_col_single_val(
+                    SS_VENDOR, vendor_val, update_parents=True
+                )
             return new_vendors
         return []
 

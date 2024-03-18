@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pandas as pd
 import validators
 
@@ -40,7 +38,7 @@ def check_url_field(url: str, reverse: bool):
     return bool_fields_test(test, reverse)
 
 
-def create_output_df(csv_path: Path, date: str) -> pd.DataFrame:
+def create_output_df(df: pd.DataFrame, date: str) -> pd.DataFrame:
     """Load fields from CSV and group (sum) by Vendor.
 
     From CSV:
@@ -65,7 +63,7 @@ def create_output_df(csv_path: Path, date: str) -> pd.DataFrame:
             return "Natural"
         return ""
 
-    df = pd.read_csv(csv_path)
+    # df = pd.read_csv(csv_path)
 
     df[SS_VALID_URLS] = df[CSV_URL].apply(check_url_field, args=(False,))
     df[SS_BLANK_URLS] = df[CSV_URL].apply(check_url_field, args=(True,))
@@ -92,7 +90,7 @@ def create_output_df(csv_path: Path, date: str) -> pd.DataFrame:
 def add_comparison_columns(df: pd.DataFrame, new_data: dict) -> pd.DataFrame:
     """Add data from previous script runs for comparisons.
 
-    new_df: expected to be in the form of {'VENDOR NAME': {'Prev Video': val, 'Prev Inven': val}}
+    new_data: expected to be in the form of {'VENDOR NAME': {'Prev Video': val, 'Prev Inven': val}}
 
     Prev Video: Dummy column name, contains the previous run's 'Has Video' value
     Prev Inven: Dummy column name, contains the previous run's 'Total Inv' value
@@ -108,9 +106,12 @@ def add_comparison_columns(df: pd.DataFrame, new_data: dict) -> pd.DataFrame:
         df["Prev Video"] = df["Prev Video"].fillna(df[SS_VIDEO_TRUE])
         df["Prev Inven"] = df["Prev Inven"].fillna(df[SS_PERC_INV])
 
+        # inputs from SS are str with %
+        # raises AttributeError if the cells are not in percent format. Click the percent icon in SS to fix this
         df[SS_INV_DELTA] = df[SS_VIDEO_TRUE] - df["Prev Video"]
-        df["Prev Inven"] = df["Prev Inven"].str.rstrip('%').astype('float') / 100.0  # inputs from SS are str with %
-        
+        if df["Prev Inven"].dtype == str:
+            df["Prev Inven"] = df["Prev Inven"].str.rstrip("%").astype("float") / 100.0
+
         df[SS_VID_INV_DELTA] = ((df[SS_PERC_INV] - df["Prev Inven"]) * 100).round(2)
         df[SS_VID_INV_DELTA] = df[SS_VID_INV_DELTA].astype(str) + "%"
         df[SS_PERC_INV] = (df[SS_PERC_INV] * 100).round(2).astype(str) + "%"
