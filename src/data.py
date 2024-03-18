@@ -63,8 +63,6 @@ def create_output_df(df: pd.DataFrame, date: str) -> pd.DataFrame:
             return "Natural"
         return ""
 
-    # df = pd.read_csv(csv_path)
-
     df[SS_VALID_URLS] = df[CSV_URL].apply(check_url_field, args=(False,))
     df[SS_BLANK_URLS] = df[CSV_URL].apply(check_url_field, args=(True,))
     df[SS_VIDEO_TRUE] = df[CSV_VIDEO].apply(check_video_field, args=(False,))
@@ -98,6 +96,12 @@ def add_comparison_columns(df: pd.DataFrame, new_data: dict) -> pd.DataFrame:
     - NaN values for Prev Video/Inven are filled to current values to cause the comparison values to be 0. This is to
       handle new vendors being added
     """
+
+    def convert_str_to_float(df: pd.DataFrame, column: str) -> None:
+        """Convert string percent to float"""
+        if df[column].dtype != "float64":
+            df[column] = df[column].str.rstrip("%").astype("float") / 100.0
+
     if new_data:  # should only be empty if new sheet
         new_df = pd.DataFrame.from_dict(new_data, orient="index")
         new_df.index.name = SS_VENDOR
@@ -109,13 +113,43 @@ def add_comparison_columns(df: pd.DataFrame, new_data: dict) -> pd.DataFrame:
         # inputs from SS are str with %
         # raises AttributeError if the cells are not in percent format. Click the percent icon in SS to fix this
         df[SS_INV_DELTA] = df[SS_VIDEO_TRUE] - df["Prev Video"]
-        if df["Prev Inven"].dtype == str:
-            df["Prev Inven"] = df["Prev Inven"].str.rstrip("%").astype("float") / 100.0
+
+        convert_str_to_float(df, "Prev Inven")
+        convert_str_to_float(df, SS_PERC_INV)
 
         df[SS_VID_INV_DELTA] = ((df[SS_PERC_INV] - df["Prev Inven"]) * 100).round(2)
+
         df[SS_VID_INV_DELTA] = df[SS_VID_INV_DELTA].astype(str) + "%"
         df[SS_PERC_INV] = (df[SS_PERC_INV] * 100).round(2).astype(str) + "%"
 
         df.drop(["Prev Video", "Prev Inven"], axis="columns", inplace=True)
 
     return df
+
+
+def parse_vendor_audit(df: pd.DataFrame, vendors: list[str], date: str, num_values: int) -> pd.DataFrame:
+    """Create Vendor Audit DataFrame.
+
+    - Drop unneeded columns, filter for the vendors selected
+    - sort by descending values by the Stock number, split for the num_values
+    - concat into one DF and return
+    """
+
+    def sort_filter_df(df):
+        return df.sort_values(by=CSV_STOCK, ascending=False)[:num_values]
+
+    df = df[df["Video Upload"] == "Y"]  # only values with video upload == Y should be used
+    clean_df = df[[CSV_VENDOR, CSV_URL, CSV_STOCK, CSV_CERT]]
+
+    for i, vendor in enumerate(vendors):
+        vendor_df = clean_df.loc[df[CSV_VENDOR] == vendor]
+        if i == 0:
+            sorted_full_df = sort_filter_df(vendor_df)
+        else:
+            sorted_full_df = pd.concat([sorted_full_df, sort_filter_df(vendor_df)])
+
+    sorted_full_df.rename(
+        columns={CSV_VENDOR: SS_VENDOR, CSV_URL: SS_VIDEO_LINK, CSV_STOCK: SS_STOCK, CSV_CERT: SS_CERT}, inplace=True
+    )
+    sorted_full_df[SS_DATE] = date
+    return sorted_full_df

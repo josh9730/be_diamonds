@@ -150,3 +150,23 @@ class SSheet:
         ]
         new_row = self.ss_client.models.Row({"parentId": self.parent_rows[parent_row], "toTop": True, "cells": cells})
         self.sheet.add_rows([new_row])
+
+    def upload_dataframe(self, df: "pd.DataFrame") -> None:
+        """Convert a DF to Smartsheet in bulk.
+
+        Does not work for parent/child rows.
+        """
+        new_rows = []
+        for row in df.iterrows():
+            cells = [
+                {
+                    "column_id": get_dict_value(self.cols_dict, col),
+                    "value": val,
+                    "displayValue": str(val),
+                    **self.base_row_vals,
+                }
+                for col, val in row[1].items()
+            ]
+            new_rows.append(self.ss_client.models.Row({"toBottom": True, "cells": cells}))
+
+        self.sheet.add_rows(new_rows)

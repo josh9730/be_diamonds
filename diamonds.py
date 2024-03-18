@@ -21,10 +21,20 @@ if not LOG_DIR.exists():
 #
 
 
-async def run_func(func: Callable, date: str, ss_name: str, waiting: ui.dialog, final: ui.dialog) -> None:
+async def run_func(
+    func: Callable,
+    waiting: ui.dialog,
+    final: ui.dialog,
+    date: str,
+    coverages_name: str = None,
+    audit_name: str = None,
+    audit_num: int = 0,
+) -> None:
     """Main function for running the user-selected action."""
     main.date = date
-    main.ss_name = ss_name
+    main.coverages_sheet_name = coverages_name
+    main.audit_sheet_name = audit_name
+    main.audit_num = int(audit_num)
 
     waiting.visible = True
     await run.cpu_bound(func)
@@ -33,9 +43,33 @@ async def run_func(func: Callable, date: str, ss_name: str, waiting: ui.dialog, 
 
 
 def next_action(action: str) -> None:
-    """Navigate to the next page."""
+    """Navigate to the next page. CSV must be uploaded"""
     if main.input_df is not None:
         ui.navigate.to(f"/{action}")
+
+
+#
+# Handlers
+#
+
+
+def handle_upload(main, e: events.UploadEventArguments):
+    """Parse input file as DataFrame."""
+    with StringIO(e.content.read().decode()) as f:
+        main.input_df = pd.read_csv(f)
+
+
+def handle_exception(err):
+    """Log event, open error dialog, and reset to main page once clicked."""
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(filename=f"{LOG_DIR}/{utils.TODAY}.log", encoding="utf-8", level=logging.DEBUG, filemode="w")
+    logger.error(err, exc_info=True, stack_info=True)
+
+    with ui.dialog() as err_dialog, ui.card():
+        err_dialog.props("persistent")
+        ui.label("An error has occured and been logged!")
+        ui.button("Close", on_click=reset_ui)
+    err_dialog.open()
 
 
 #
@@ -81,15 +115,14 @@ def final_diag() -> ui.dialog:
         final.props("persistent")
         final.visible = False
         ui.label("Finished!")
-        ui.button("Close", on_click=lambda: reset_ui(final))
+        ui.button("Close", on_click=reset_ui)
     final.open()
     return final
 
 
-def reset_ui(diag: ui.dialog):
-    diag.visible = False
+def reset_ui():
+    """Resets UI to main page."""
     ui.navigate.to("/")
-    csv.reset()
 
 
 #
@@ -98,14 +131,15 @@ def reset_ui(diag: ui.dialog):
 
 
 def vendors_checkbox():
-    """Helper func for vendor check
+    """Helper func for vendor check.
 
     - checkboxes are bound to the True/False values of selected_vendors
     """
     main.csv_vendors()
-    with ui.grid(columns=3):
-        for vendor in main.selected_vendors:
-            ui.checkbox(vendor).bind_value(main.selected_vendors, vendor).classes("h-2")
+    with ui.scroll_area():
+        with ui.grid(columns=3):
+            for vendor in main.selected_vendors:
+                ui.checkbox(vendor).bind_value(main.selected_vendors, vendor).classes("h-2")
 
 
 @ui.page("/vendors")
@@ -114,12 +148,16 @@ def vendors_page():
 
     - audit_all switch is bound to selected_vendors. Toggling the switch sets all vendors to True or False.
     """
+    waiting = waiting_diag()
+    final = final_diag()
+    header("Vendor Audits")
     with ui.row():
         ss_name = sheet_name(utils.get_sheet_name("audit"))
         date = sheet_date_ui()
-    header("Vendor Audits")
-    radio = ui.radio(["Weekly Audit", "Deep Dive"], value="Weekly Audit").props("inline")
-    audit_all = ui.switch("Audit All Vendors?", value=False).bind_value_to(
+    with ui.row():
+        radio = ui.radio({10: "Weekly Audit", 1000: "Deep Dive"}, value=10).props("inline")
+        audit_num = ui.number(label="Custom Audit Count").bind_value_from(radio)
+    ui.switch("Audit All Vendors?", value=False).bind_value_to(
         main.selected_vendors, forward=lambda e: main.selected_vendors.update((i, e) for i in main.selected_vendors)
     )
     add_seps()
@@ -127,7 +165,16 @@ def vendors_page():
     vendors_checkbox()
     add_seps()
 
-    ui.button("Run", on_click=lambda: run_func(main.run_audits, date.value, ss_name.value, waiting, final))
+    #
+    # Need to prevent running without selecting at least one vendor
+    #
+    ui.button(
+        "Run",
+        color="green",
+        on_click=lambda: run_func(
+            main.run_audits, waiting, final, date.value, audit_name=ss_name.value, audit_num=audit_num.value
+        ),
+    )
 
 
 #
@@ -137,13 +184,19 @@ def vendors_page():
 
 @ui.page("/coverages")
 def coverages_page():
+    """Page for launching Coverages uploads."""
+    waiting = waiting_diag()
+    final = final_diag()
     header("Coverages Upload")
     with ui.row():
         ss_name = sheet_name(utils.get_sheet_name("coverages"))
         date = sheet_date_ui()
-    waiting = waiting_diag()
-    final = final_diag()
-    ui.button("Run", on_click=lambda: run_func(main.run_coverages, date.value, ss_name.value, waiting, final))
+
+    ui.button(
+        "Run",
+        color="green",
+        on_click=lambda: run_func(main.run_coverages, waiting, final, date.value, coverages_name=ss_name.value),
+    )
 
 
 #
@@ -153,78 +206,48 @@ def coverages_page():
 
 @ui.page("/both")
 def both_page():
+    waiting = waiting_diag()
+    final = final_diag()
     header("Coverages and Vendor Audits")
-    date = sheet_date_ui()
     with ui.row():
         coverages_name = sheet_name(utils.get_sheet_name("coverages"), "Coverages Sheet")
         audits_name = sheet_name(utils.get_sheet_name("audit"), "Vendor Audits Sheet")
-    waiting = waiting_diag()
-    final = final_diag()
-    ui.button("Run", on_click=lambda: run_func(main.run_both, date.value, ss_name.value, waiting, final))
+    date = sheet_date_ui()
+
+    # ui.button("Run", color="green", on_click=lambda: run_func(main.run_both, date.value, ss_name.value, waiting, final))
 
 
 #
 # Main Page
 #
 
-main = Main()
-header(UI_TITLE)
-ui.label("Upload the new CSV.").classes("font-bold")
-csv = (
+
+@ui.page("/")
+def main_page():
+    with ui.tabs().classes("w-full") as tabs:
+        one = ui.tab("Program")
+        two = ui.tab("Help")
+
+    header(UI_TITLE)
+    ui.label("Upload the new CSV.").classes("font-bold")
     ui.upload(
         label="Input CSV",
         auto_upload=True,
         on_rejected=lambda: ui.notify("Incorrect file type."),
         on_upload=lambda e: handle_upload(main, e),
-    )
-    .props("accept=.csv")
-    .classes("max-w-full")
-)
-add_seps()
-ui.label("Select Action:").classes("font-bold")
-with ui.row():
-    ui.button("Coverages", color="green", on_click=lambda: next_action("coverages"))
-    ui.button("Vendor Audit", color="grey", on_click=lambda: next_action("vendors"))
-    ui.button("Coverages & Audit", on_click=lambda: next_action("both"))
-
-with ui.dialog() as waiting, ui.card():
-    waiting.props("persistent")
-    waiting.visible = False
-    ui.label("Working, this may take several minutes...")
-waiting.open()
-with ui.dialog() as final, ui.card():
-    final.props("persistent")
-    final.visible = False
-    ui.label("Finished!")
-    ui.button("Close", on_click=lambda: reset_ui(final))
-final.open()
-
-
-#
-# Handlers, Exceptions
-#
-
-
-def handle_upload(main, e: events.UploadEventArguments):
-    with StringIO(e.content.read().decode()) as f:
-        main.input_df = pd.read_csv(f)
-
-
-def handle_exception(err):
-    logger = logging.getLogger(__name__)
-    logging.basicConfig(filename=f"{LOG_DIR}/{utils.TODAY}.log", encoding="utf-8", level=logging.DEBUG, filemode="w")
-    logger.error(err, exc_info=True, stack_info=True)
-
-    with ui.dialog() as err_dialog, ui.card():
-        err_dialog.props("persistent")
-        ui.label("An error has occured and been logged!")
-        ui.button("Close", on_click=lambda: reset_ui(err_dialog))
-    err_dialog.open()
+    ).props("accept=.csv").classes("max-w-full")
+    add_seps()
+    ui.label("Select Action:").classes("font-bold")
+    with ui.row():
+        ui.button("Coverages", color="green", on_click=lambda: next_action("coverages"))
+        ui.button("Vendor Audit", color="grey", on_click=lambda: next_action("vendors"))
+        ui.button("Coverages & Audit", on_click=lambda: next_action("both"))
 
 
 #
 # Start UI
 #
 
+main = Main()
 ui.run(dark=True)
 app.on_exception(lambda err: handle_exception(traceback.format_exception(err)))
