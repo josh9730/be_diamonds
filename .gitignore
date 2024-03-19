@@ -166,3 +166,4 @@ replit.nix
 *.csv
 .local/
 *.txt
+poetry.lock
