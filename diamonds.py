@@ -12,6 +12,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from src import utils
 from src.constants import *
+from src.help_md import main_help
 from src.main import Main
 
 LOG_DIR = Path("logs/")
@@ -294,24 +295,31 @@ def both_page():
 
 @ui.page("/")
 def main_page():
-    with ui.tabs().classes("w-full") as tabs:
-        one = ui.tab("Program")
-        two = ui.tab("Help")
-
     header(UI_TITLE)
-    ui.label("Upload the new CSV.").classes("font-bold")
-    ui.upload(
-        label="Input CSV",
-        auto_upload=True,
-        on_rejected=lambda: ui.notify("Incorrect file type."),
-        on_upload=lambda e: handle_upload(main, e),
-    ).props("accept=.csv").classes("max-w-full")
-    add_seps()
-    ui.label("Select Action:").classes("font-bold")
-    with ui.row():
-        ui.button("Coverages", color="green", on_click=lambda: next_action("coverages"))
-        ui.button("Vendor Audit", color="grey", on_click=lambda: next_action("vendors"))
-        ui.button("Coverages & Audit", on_click=lambda: next_action("both"))
+    with ui.tabs().classes("w-full") as tabs:
+        program_tab = ui.tab("Program", icon="home")
+        help_tab = ui.tab("Help", icon="info")
+
+    with ui.tab_panels(tabs, value=program_tab).classes("w-full"):
+        with ui.tab_panel(program_tab):
+            ui.label("See 'Help' for more information!")
+            add_seps()
+            ui.label("Upload the new CSV.").classes("font-bold")
+            ui.upload(
+                label="Input CSV",
+                auto_upload=True,
+                on_rejected=lambda: ui.notify("Incorrect file type."),
+                on_upload=lambda e: handle_upload(main, e),
+            ).props("accept=.csv").classes("max-w-full")
+            add_seps()
+            ui.label("Select Action:").classes("font-bold")
+            with ui.row():
+                ui.button("Coverages", color="green", on_click=lambda: next_action("coverages"))
+                ui.button("Vendor Audit", color="grey", on_click=lambda: next_action("vendors"))
+                ui.button("Coverages & Audit", on_click=lambda: next_action("both"))
+
+        with ui.tab_panel(help_tab):
+            ui.markdown(main_help)
 
 
 #

@@ -138,7 +138,7 @@ def parse_vendor_audit(df: pd.DataFrame, vendors: list[str], date: str, num_valu
     def sort_filter_df(df):
         return df.sort_values(by=CSV_STOCK, ascending=False)[:num_values]
 
-    df = df[df["Video Upload"] == "Y"]  # only values with video upload == Y should be used
+    df = df[df[CSV_VIDEO] == "Y"]  # only values with video upload == Y should be used
     clean_df = df[[CSV_VENDOR, CSV_URL, CSV_STOCK, CSV_CERT]]
 
     for i, vendor in enumerate(vendors):
