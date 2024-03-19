@@ -18,12 +18,14 @@ LOG_DIR = Path("logs/")
 if not LOG_DIR.exists():
     LOG_DIR.mkdir()
 
-
 #
 # Authentication
 #
 
-passwords = {"bediamonds": "e49c333119eb701c2530763d715e7130e07569bcdfe09da586aa6f3d3e87431a"}
+passwords = {
+    "bediamonds":
+    "e49c333119eb701c2530763d715e7130e07569bcdfe09da586aa6f3d3e87431a"
+}
 unrestricted_page_routes = {"/login"}
 
 
@@ -35,8 +37,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         if not app.storage.user.get("authenticated", False):
-            if request.url.path in Client.page_routes.values() and request.url.path not in unrestricted_page_routes:
-                app.storage.user["referrer_path"] = request.url.path  # remember where the user wanted to go
+            if request.url.path in Client.page_routes.values(
+            ) and request.url.path not in unrestricted_page_routes:
+                app.storage.user[
+                    "referrer_path"] = request.url.path  # remember where the user wanted to go
                 return RedirectResponse("/login")
         return await call_next(request)
 
@@ -46,11 +50,18 @@ app.add_middleware(AuthMiddleware)
 
 @ui.page("/login")
 def login() -> Optional[RedirectResponse]:
-    def try_login() -> None:  # local function to avoid passing username and password as arguments
+
+    def try_login(
+    ) -> None:  # local function to avoid passing username and password as arguments
         hash_pw = utils.hash_password(password.value)
         if passwords.get(username.value) == hash_pw:
-            app.storage.user.update({"username": username.value, "authenticated": True})
-            ui.navigate.to(app.storage.user.get("referrer_path", "/"))  # go back to where the user wanted to go
+            app.storage.user.update({
+                "username": username.value,
+                "authenticated": True
+            })
+            ui.navigate.to(app.storage.user.get(
+                "referrer_path",
+                "/"))  # go back to where the user wanted to go
         else:
             ui.notify("Wrong username or password", color="negative")
 
@@ -58,7 +69,10 @@ def login() -> Optional[RedirectResponse]:
         return RedirectResponse("/")
     with ui.card().classes("absolute-center"):
         username = ui.input("Username").on("keydown.enter", try_login)
-        password = ui.input("Password", password=True, password_toggle_button=True).on("keydown.enter", try_login)
+        password = ui.input("Password",
+                            password=True,
+                            password_toggle_button=True).on(
+                                "keydown.enter", try_login)
         ui.button("Log in", on_click=try_login)
     return None
 
@@ -109,7 +123,10 @@ def handle_upload(main, e: events.UploadEventArguments):
 def handle_exception(err):
     """Log event, open error dialog, and reset to main page once clicked."""
     logger = logging.getLogger(__name__)
-    logging.basicConfig(filename=f"{LOG_DIR}/{utils.TODAY}.log", encoding="utf-8", level=logging.DEBUG, filemode="w")
+    logging.basicConfig(filename=f"{LOG_DIR}/{utils.TODAY}.log",
+                        encoding="utf-8",
+                        level=logging.DEBUG,
+                        filemode="w")
     logger.error(err, exc_info=True, stack_info=True)
 
     with ui.dialog() as err_dialog, ui.card():
@@ -131,7 +148,8 @@ def add_seps():
 
 
 def header(title: str):
-    with ui.header(elevated=True).style("background-color: #3874c8").classes("items-center justify-between"):
+    with ui.header(elevated=True).style("background-color: #3874c8").classes(
+            "items-center justify-between"):
         ui.label(title).classes("text-lg font-bold")
 
 
@@ -142,7 +160,8 @@ def sheet_name(sheet_name: str, label: str = "Smartsheet Name"):
 def sheet_date_ui():
     with ui.input("Date", value=utils.TODAY) as date:
         with date.add_slot("append"):
-            ui.icon("edit_calendar").on("click", lambda: menu.open()).classes("cursor-pointer")
+            ui.icon("edit_calendar").on(
+                "click", lambda: menu.open()).classes("cursor-pointer")
         with ui.menu() as menu:
             ui.date().bind_value(date)
     return date
@@ -169,6 +188,7 @@ def final_diag() -> ui.dialog:
 
 def reset_ui():
     """Resets UI to main page."""
+    main.input_df = None
     ui.navigate.to("/")
 
 
@@ -186,7 +206,8 @@ def vendors_checkbox():
     with ui.scroll_area():
         with ui.grid(columns=3):
             for vendor in main.selected_vendors:
-                ui.checkbox(vendor).bind_value(main.selected_vendors, vendor).classes("h-2")
+                ui.checkbox(vendor).bind_value(main.selected_vendors,
+                                               vendor).classes("h-2")
 
 
 @ui.page("/vendors")
@@ -202,11 +223,16 @@ def vendors_page():
         ss_name = sheet_name(utils.get_sheet_name("audit"))
         date = sheet_date_ui()
     with ui.row():
-        radio = ui.radio({10: "Weekly Audit", 1000: "Deep Dive"}, value=10).props("inline")
-        audit_num = ui.number(label="Custom Audit Count").bind_value_from(radio)
+        radio = ui.radio({
+            10: "Weekly Audit",
+            1000: "Deep Dive"
+        }, value=10).props("inline")
+        audit_num = ui.number(
+            label="Custom Audit Count").bind_value_from(radio)
     ui.switch("Audit All Vendors?", value=False).bind_value_to(
-        main.selected_vendors, forward=lambda e: main.selected_vendors.update((i, e) for i in main.selected_vendors)
-    )
+        main.selected_vendors,
+        forward=lambda e: main.selected_vendors.update(
+            (i, e) for i in main.selected_vendors))
     add_seps()
     ui.label("Vendor Selection").classes("font-bold").style("color: red")
     vendors_checkbox()
@@ -218,9 +244,12 @@ def vendors_page():
     ui.button(
         "Run",
         color="green",
-        on_click=lambda: run_func(
-            main.run_audits, waiting, final, date.value, audit_name=ss_name.value, audit_num=audit_num.value
-        ),
+        on_click=lambda: run_func(main.run_audits,
+                                  waiting,
+                                  final,
+                                  date.value,
+                                  audit_name=ss_name.value,
+                                  audit_num=audit_num.value),
     )
 
 
@@ -242,7 +271,11 @@ def coverages_page():
     ui.button(
         "Run",
         color="green",
-        on_click=lambda: run_func(main.run_coverages, waiting, final, date.value, coverages_name=ss_name.value),
+        on_click=lambda: run_func(main.run_coverages,
+                                  waiting,
+                                  final,
+                                  date.value,
+                                  coverages_name=ss_name.value),
     )
 
 
@@ -257,8 +290,10 @@ def both_page():
     final = final_diag()
     header("Coverages and Vendor Audits")
     with ui.row():
-        coverages_name = sheet_name(utils.get_sheet_name("coverages"), "Coverages Sheet")
-        audits_name = sheet_name(utils.get_sheet_name("audit"), "Vendor Audits Sheet")
+        coverages_name = sheet_name(utils.get_sheet_name("coverages"),
+                                    "Coverages Sheet")
+        audits_name = sheet_name(utils.get_sheet_name("audit"),
+                                 "Vendor Audits Sheet")
     date = sheet_date_ui()
 
     # ui.button("Run", color="green", on_click=lambda: run_func(main.run_both, date.value, ss_name.value, waiting, final))
@@ -286,8 +321,12 @@ def main_page():
     add_seps()
     ui.label("Select Action:").classes("font-bold")
     with ui.row():
-        ui.button("Coverages", color="green", on_click=lambda: next_action("coverages"))
-        ui.button("Vendor Audit", color="grey", on_click=lambda: next_action("vendors"))
+        ui.button("Coverages",
+                  color="green",
+                  on_click=lambda: next_action("coverages"))
+        ui.button("Vendor Audit",
+                  color="grey",
+                  on_click=lambda: next_action("vendors"))
         ui.button("Coverages & Audit", on_click=lambda: next_action("both"))
 
 
