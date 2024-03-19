@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Final, Iterable
+import hashlib
 
 import yaml
 from pytz import timezone
@@ -33,3 +34,9 @@ def save_df_output(df: "pd.DataFrame") -> None:
 
 def filter_list(_list: list, filter_list: Iterable) -> list:
     return [i for i in _list if i not in filter_list]
+
+
+def hash_password(password: str) -> str:
+    password_bytes = password.encode("utf-8")
+    hash_object = hashlib.sha256(password_bytes)
+    return hash_object.hexdigest()
