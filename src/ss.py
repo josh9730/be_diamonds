@@ -143,7 +143,6 @@ class SSheet:
             {
                 "column_id": get_dict_value(self.cols_dict, col["col_name"]),
                 "value": col["value"],
-                "displayValue": str(col["value"]),
                 **self.base_row_vals,
             }
             for col in row_data

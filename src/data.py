@@ -79,10 +79,18 @@ def create_output_df(df: pd.DataFrame, date: str) -> pd.DataFrame:
     df.rename(columns={CSV_VIDEO: SS_VIDEO_INV, CSV_VENDOR: SS_VENDOR, CSV_TYPE: SS_TYPE}, inplace=True)
 
     df[SS_PERC_INV] = 1 - ((df[SS_VIDEO_INV] - df[SS_VIDEO_TRUE]) / df[SS_VIDEO_INV])
-    df[SS_PERC_INV_URL] = (100 - ((df[SS_VIDEO_INV] - df[SS_VALID_URLS]) / df[SS_VIDEO_INV] * 100)).round(2)
-    df[SS_PERC_INV_URL] = df[SS_PERC_INV_URL].astype(str) + "%"
+    df[SS_PERC_INV_URL] = (1 - ((df[SS_VIDEO_INV] - df[SS_VALID_URLS]) / df[SS_VIDEO_INV])).round(4)
 
+    df.fillna("", inplace=True)
     return df
+
+
+"""
+from src import data
+import pandas as pd
+data.create_output_df(pd.read_csv("INPUTS/2024-01-04.csv"), '2024-01-01')
+
+"""
 
 
 def add_comparison_columns(df: pd.DataFrame, new_data: dict) -> pd.DataFrame:
@@ -117,13 +125,11 @@ def add_comparison_columns(df: pd.DataFrame, new_data: dict) -> pd.DataFrame:
         convert_str_to_float(df, "Prev Inven")
         convert_str_to_float(df, SS_PERC_INV)
 
-        df[SS_VID_INV_DELTA] = ((df[SS_PERC_INV] - df["Prev Inven"]) * 100).round(2)
-
-        df[SS_VID_INV_DELTA] = df[SS_VID_INV_DELTA].astype(str) + "%"
-        df[SS_PERC_INV] = (df[SS_PERC_INV] * 100).round(2).astype(str) + "%"
+        df[SS_VID_INV_DELTA] = (df[SS_PERC_INV] - df["Prev Inven"]).round(4)
+        df[SS_PERC_INV] = df[SS_PERC_INV].round(4)
 
         df.drop(["Prev Video", "Prev Inven"], axis="columns", inplace=True)
-
+        df.fillna("", inplace=True)
     return df
 
 
