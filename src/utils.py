@@ -1,6 +1,6 @@
+import hashlib
 from datetime import datetime
 from typing import Final, Iterable
-import hashlib
 
 import yaml
 from pytz import timezone

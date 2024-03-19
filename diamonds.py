@@ -2,25 +2,22 @@ import logging
 import traceback
 from io import StringIO
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Optional
 
 import pandas as pd
-from nicegui import app, events, run, ui
+from fastapi import Request
+from fastapi.responses import RedirectResponse
+from nicegui import Client, app, events, run, ui
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from src import utils
 from src.constants import *
 from src.main import Main
-from typing import Optional
-
-from fastapi import Request
-from fastapi.responses import RedirectResponse
-from starlette.middleware.base import BaseHTTPMiddleware
-
-from nicegui import Client, app, ui
 
 LOG_DIR = Path("logs/")
 if not LOG_DIR.exists():
     LOG_DIR.mkdir()
+
 
 #
 # Authentication
