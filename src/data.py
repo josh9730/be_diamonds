@@ -158,4 +158,5 @@ def parse_vendor_audit(df: pd.DataFrame, vendors: list[str], date: str, num_valu
         columns={CSV_VENDOR: SS_VENDOR, CSV_URL: SS_VIDEO_LINK, CSV_STOCK: SS_STOCK, CSV_CERT: SS_CERT}, inplace=True
     )
     sorted_full_df[SS_DATE] = date
+    sorted_full_df.fillna("", inplace=True)
     return sorted_full_df

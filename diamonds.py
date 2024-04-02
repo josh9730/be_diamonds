@@ -108,9 +108,17 @@ def handle_upload(main, e: events.UploadEventArguments):
 
 def handle_exception(err):
     """Log event, open error dialog, and reset to main page once clicked."""
-    logger = logging.getLogger(__name__)
-    logging.basicConfig(filename=f"{LOG_DIR}/{utils.TODAY}.log", encoding="utf-8", level=logging.DEBUG, filemode="w")
-    logger.error(err, exc_info=True, stack_info=True)
+    try:
+        from replit import db
+    except ModuleNotFoundError:
+        logger = logging.getLogger(__name__)
+        logging.basicConfig(
+            filename=f"{LOG_DIR}/{utils.TODAY}.log", encoding="utf-8", level=logging.DEBUG, filemode="w"
+        )
+        logger.error(err, exc_info=True, stack_info=True)
+    else:
+        db["logs"] = db.get("logs", [])
+        db["logs"].append(utils.TODAY, err)
 
     with ui.dialog() as err_dialog, ui.card():
         err_dialog.props("persistent")
