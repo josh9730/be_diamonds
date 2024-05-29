@@ -62,6 +62,7 @@ class Main:
         utils.save_sheet_name(self.coverages_sheet_name, "coverages")
 
     def run_audits(self):
+        """Run methods to add to Vendor Audit sheet."""
         self.get_audit_ss()
         self.audit_df = data.parse_vendor_audit(self.input_df, self.create_vendors_list(), self.date, self.audit_num)
         utils.save_df_output(self.audit_df)

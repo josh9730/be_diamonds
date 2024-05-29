@@ -285,7 +285,7 @@ def both_page():
         "Run",
         color="green",
         on_click=lambda: run_func(
-            main.run_coverages,
+            main.run_both,
             waiting,
             final,
             date.value,
