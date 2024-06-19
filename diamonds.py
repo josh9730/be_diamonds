@@ -1,14 +1,14 @@
+import multiprocessing  # noqa
+multiprocessing.freeze_support()  # noqa
+
 import logging
 import traceback
 from io import StringIO
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable
 
 import pandas as pd
-from fastapi import Request
-from fastapi.responses import RedirectResponse
-from nicegui import Client, app, events, run, ui
-from starlette.middleware.base import BaseHTTPMiddleware
+from nicegui import app, events, run, ui, native
 
 from src import utils
 from src.constants import *
@@ -19,49 +19,9 @@ LOG_DIR = Path("logs/")
 if not LOG_DIR.exists():
     LOG_DIR.mkdir()
 
-#
-# Authentication
-#
-
-passwords = {"bediamonds": "e49c333119eb701c2530763d715e7130e07569bcdfe09da586aa6f3d3e87431a"}
-unrestricted_page_routes = {"/login"}
-
-
-class AuthMiddleware(BaseHTTPMiddleware):
-    """This middleware restricts access to all NiceGUI pages.
-
-    It redirects the user to the login page if they are not authenticated.
-    """
-
-    async def dispatch(self, request: Request, call_next):
-        if not app.storage.user.get("authenticated", False):
-            if request.url.path in Client.page_routes.values() and request.url.path not in unrestricted_page_routes:
-                app.storage.user["referrer_path"] = request.url.path  # remember where the user wanted to go
-                return RedirectResponse("/login")
-        return await call_next(request)
-
-
-app.add_middleware(AuthMiddleware)
-
-
-@ui.page("/login")
-def login() -> Optional[RedirectResponse]:
-    def try_login() -> None:  # local function to avoid passing username and password as arguments
-        hash_pw = utils.hash_password(password.value)
-        if passwords.get(username.value) == hash_pw:
-            app.storage.user.update({"username": username.value, "authenticated": True})
-            ui.navigate.to(app.storage.user.get("referrer_path", "/"))  # go back to where the user wanted to go
-        else:
-            ui.notify("Wrong username or password", color="negative")
-
-    if app.storage.user.get("authenticated", False):
-        return RedirectResponse("/")
-    with ui.card().classes("absolute-center"):
-        username = ui.input("Username").on("keydown.enter", try_login)
-        password = ui.input("Password", password=True, password_toggle_button=True).on("keydown.enter", try_login)
-        ui.button("Log in", on_click=try_login)
-    return None
-
+"""
+pyinstaller diamonds.py --add-data="C:/Users/jdick/AppData/Local/pypoetry/Cache/virtualenvs/be-diamonds-TXN2MRGH-py3.12/Lib/site-packages/nicegui;nicegui"
+"""
 
 #
 # Launcher functions
@@ -108,17 +68,11 @@ def handle_upload(main, e: events.UploadEventArguments):
 
 def handle_exception(err):
     """Log event, open error dialog, and reset to main page once clicked."""
-    try:
-        from replit import db
-    except ModuleNotFoundError:
-        logger = logging.getLogger(__name__)
-        logging.basicConfig(
-            filename=f"{LOG_DIR}/{utils.TODAY}.log", encoding="utf-8", level=logging.DEBUG, filemode="w"
-        )
-        logger.error(err, exc_info=True, stack_info=True)
-    else:
-        db["logs"] = db.get("logs", [])
-        db["logs"].append(utils.TODAY, err)
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(
+        filename=f"{LOG_DIR}/{utils.TODAY}.log", encoding="utf-8", level=logging.DEBUG, filemode="w"
+    )
+    logger.error(err, exc_info=True, stack_info=True)
 
     with ui.dialog() as err_dialog, ui.card():
         err_dialog.props("persistent")
@@ -335,5 +289,5 @@ def main_page():
 #
 
 main = Main()
-ui.run(dark=True, storage_secret="kFC4Ytf%Y&%%%pDFe3mg")
 app.on_exception(lambda err: handle_exception(traceback.format_exception(err)))
+ui.run(dark=True, reload=False, native=True, port=native.find_open_port())

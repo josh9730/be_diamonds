@@ -1,21 +1,5 @@
-import os
-
-import keyring
 import smartsheet
-
-
-def retrieve_token() -> str:
-    """Retrieve smartsheet API token from replit."""
-
-    api_key = None
-    try:
-        api_key = os.environ["SS_TOKEN"]
-    except KeyError:
-        api_key = keyring.get_password("ss", "api_key")
-    finally:
-        if not api_key:
-            raise KeyError("Smartsheet API key not found.")
-    return api_key
+from src.constants import SS_API_KEY
 
 
 def get_dict_value(cols_dict: dict, col_name: str) -> int:
@@ -35,7 +19,7 @@ class SSheet:
         self.sheet_rows = []
 
         if not api_key:
-            api_key = retrieve_token()
+            api_key = SS_API_KEY
 
         self.ss_client = smartsheet.Smartsheet(api_key)
         self.ss_client.errors_as_exceptions(True)
