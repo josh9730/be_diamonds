@@ -1,4 +1,5 @@
 import multiprocessing  # noqa
+
 multiprocessing.freeze_support()  # noqa
 
 import logging
@@ -18,6 +19,10 @@ from src.main import Main
 LOG_DIR = Path("logs/")
 if not LOG_DIR.exists():
     LOG_DIR.mkdir()
+
+
+AUDIT_SHEET_NAME: Final[str] = "Colorless Diamond Audit"
+COVERAGES_SHEET_NAME: Final[str] = "Diamond Video Coverage Tracker 2024"
 
 """
 pyinstaller diamonds.py --add-data="C:/Users/jdick/AppData/Local/pypoetry/Cache/virtualenvs/be-diamonds-TXN2MRGH-py3.12/Lib/site-packages/nicegui;nicegui"
@@ -69,9 +74,7 @@ def handle_upload(main, e: events.UploadEventArguments):
 def handle_exception(err):
     """Log event, open error dialog, and reset to main page once clicked."""
     logger = logging.getLogger(__name__)
-    logging.basicConfig(
-        filename=f"{LOG_DIR}/{utils.TODAY}.log", encoding="utf-8", level=logging.DEBUG, filemode="w"
-    )
+    logging.basicConfig(filename=f"{LOG_DIR}/{utils.TODAY}.log", encoding="utf-8", level=logging.DEBUG, filemode="w")
     logger.error(err, exc_info=True, stack_info=True)
 
     with ui.dialog() as err_dialog, ui.card():
@@ -163,7 +166,7 @@ def vendors_page():
     final = final_diag()
     header("Vendor Audits")
     with ui.row():
-        ss_name = sheet_name(utils.get_sheet_name("audit"))
+        ss_name = sheet_name(AUDIT_SHEET_NAME)
         date = sheet_date_ui()
     with ui.row():
         radio = ui.radio({10: "Weekly Audit", 1000: "Deep Dive"}, value=10).props("inline")
@@ -200,7 +203,7 @@ def coverages_page():
     final = final_diag()
     header("Coverages Upload")
     with ui.row():
-        ss_name = sheet_name(utils.get_sheet_name("coverages"))
+        ss_name = sheet_name(COVERAGES_SHEET_NAME)
         date = sheet_date_ui()
 
     ui.button(
@@ -221,8 +224,8 @@ def both_page():
     final = final_diag()
     header("Coverages Upload and Vendor Audits")
     with ui.row():
-        coverages_name = sheet_name(utils.get_sheet_name("coverages"), "Coverages Sheet")
-        audits_name = sheet_name(utils.get_sheet_name("audit"), "Vendor Audits Sheet")
+        coverages_name = sheet_name(COVERAGES_SHEET_NAME, "Coverages Sheet")
+        audits_name = sheet_name(AUDIT_SHEET_NAME, "Vendor Audits Sheet")
     date = sheet_date_ui()
     with ui.row():
         radio = ui.radio({10: "Weekly Audit", 1000: "Deep Dive"}, value=10).props("inline")

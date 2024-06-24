@@ -11,11 +11,6 @@ TIMEZONE: Final = "US/Pacific"
 TODAY: Final = datetime.now(timezone(TIMEZONE)).strftime("%Y-%m-%d")  # replit is in UTC
 
 
-def get_sheet_name(_type: str) -> str:
-    with open(SHEET_NAME_FILE, "r") as f:
-        return yaml.safe_load(f)[_type]
-
-
 def save_sheet_name(sheet_name: str, _type: str) -> None:
     with open(SHEET_NAME_FILE, "r") as f:
         data = yaml.safe_load(f)
