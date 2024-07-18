@@ -20,19 +20,9 @@ LOG_DIR = Path("logs/")
 if not LOG_DIR.exists():
     LOG_DIR.mkdir()
 
-
 AUDIT_SHEET_NAME: Final[str] = "Colorless Diamond Audit"
 COVERAGES_SHEET_NAME: Final[str] = "Diamond Video Coverage Tracker 2024"
 
-"""
-manual
-pyinstaller diamonds.py --name diamonds1.3 --onefile --add-data="C:/Users/jdick/AppData/Local/pypoetry/Cache/virtualenvs/be-diamonds-TXN2MRGH-py3.12/Lib/site-packages/nicegui;nicegui"
-need to add 'smartsheet.sheets', 'smartsheet.models' hidden imports
-
-or
-- rename name field
-- pyinstaller diamonds.spec
-"""
 
 #
 # Launcher functions
