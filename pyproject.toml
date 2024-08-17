@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "be-diamonds"
-version = "0.1.0"
+version = "1.4"
 description = ""
 authors = ["Josh <jdickman@cenic.org>"]
 readme = "README.md"

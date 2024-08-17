@@ -134,15 +134,24 @@ def add_comparison_columns(df: pd.DataFrame, new_data: dict) -> pd.DataFrame:
 
 
 def parse_vendor_audit(df: pd.DataFrame, vendors: list[str], date: str, num_values: int) -> pd.DataFrame:
-    """Create Vendor Audit DataFrame.
+    """Create Vendor Audit DataFrame from raw CSV dataframe.
 
     - Drop unneeded columns, filter for the vendors selected
     - sort by descending values by the Stock number, split for the num_values
     - concat into one DF and return
     """
 
-    def sort_filter_df(df):
-        return df.sort_values(by=CSV_STOCK, ascending=False)[:num_values]
+    def sort_filter_df(df: pd.DataFrame) -> pd.DataFrame:
+        """Return sorted DF in descending order.
+
+        - create a temp column and put the stock numbers in it, removing any letters and coercing to int
+        - Stock #'s are expected to be alphanumeric, with only trailing letters
+        """
+        df['temp_stock'] = df[CSV_STOCK].replace(to_replace="[A-Za-z]", value="", regex=True).astype(int)
+
+        df = df.sort_values(by='temp_stock', ascending=False)[:num_values]
+        df.drop(columns=['temp_stock'], inplace=True)
+        return df
 
     df = df[df[CSV_VIDEO] == "Y"]  # only values with video upload == Y should be used
     clean_df = df[[CSV_VENDOR, CSV_URL, CSV_STOCK, CSV_CERT]]

@@ -6,9 +6,9 @@ import yaml
 from pytz import timezone
 from tabulate import tabulate
 
-SHEET_NAME_FILE: str = "src/sheet_name.yaml"
-TIMEZONE: Final = "US/Pacific"
-TODAY: Final = datetime.now(timezone(TIMEZONE)).strftime("%Y-%m-%d")  # replit is in UTC
+SHEET_NAME_FILE: Final[str] = "src/sheet_name.yaml"
+TIMEZONE: Final[str] = "US/Pacific"
+TODAY: Final[str] = datetime.now(timezone(TIMEZONE)).strftime("%Y-%m-%d")  # replit is in UTC
 
 
 def save_sheet_name(sheet_name: str, _type: str) -> None:
