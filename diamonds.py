@@ -20,9 +20,6 @@ LOG_DIR = Path("logs/")
 if not LOG_DIR.exists():
     LOG_DIR.mkdir()
 
-AUDIT_SHEET_NAME: Final[str] = "Colorless Diamond Audit"
-COVERAGES_SHEET_NAME: Final[str] = "Diamond Video Coverage Tracker 2024"
-
 
 #
 # Launcher functions
@@ -287,6 +284,7 @@ def main_page():
 # Start UI
 #
 
-main = Main()
-app.on_exception(lambda err: handle_exception(traceback.format_exception(err)))
-ui.run(dark=True, reload=False, native=True, port=native.find_open_port())
+if __name__ == "__main__":
+    main = Main()
+    app.on_exception(lambda err: handle_exception(traceback.format_exception(err)))
+    ui.run(dark=True, reload=False, native=True, port=native.find_open_port())

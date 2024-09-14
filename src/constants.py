@@ -6,7 +6,8 @@ UI_TITLE: Final[str] = "Diamonds Program"
 SS_API_KEY: Final[str] = "FF8W4twmkyxslTkWRqLabgnI0odHKPhUk5V7S"
 
 # Name of the Smartsheet, exact match
-SS_NAME: Final[str] = "Diamond Video Coverage Tracker 2024"
+COVERAGES_SHEET_NAME: Final[str] = "Diamond Video Coverage Tracker 2024"
+AUDIT_SHEET_NAME: Final[str] = "Colorless Diamond Audit"
 
 # Column names on Smartsheet
 # Note: Adding columns will have no effect on the output. This is only for name changes

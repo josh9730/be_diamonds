@@ -153,4 +153,12 @@ class SSheet:
             ]
             new_rows.append(self.ss_client.models.Row({"toBottom": True, "cells": cells}))
 
-        self.sheet.add_rows(new_rows)
+        # issues with posting if over a certain size
+        chunk_len = 100000  # somewhat aribitrary, tested with length of ~200000 so this is conservative
+        if len(new_rows) > chunk_len:
+            chunks = new_rows // chunk_len + 1  # add one to account for remainder
+            new_list = [new_rows[i:i + chunks] for i in range(0, len(new_rows), chunks)]
+            for sub_list in new_list:
+                self.sheet.add_rows(sub_list)
+        else:
+            self.sheet.add_rows(new_rows)

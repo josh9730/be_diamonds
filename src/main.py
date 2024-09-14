@@ -5,6 +5,8 @@ import pandas as pd
 from src import data, ss, utils
 from src.constants import *
 
+pd.options.mode.chained_assignment = None  # default='warn'
+
 
 class Main:
     """Main class for the various functions perfomed by this tool.
